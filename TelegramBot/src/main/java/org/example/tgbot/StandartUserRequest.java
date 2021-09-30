@@ -5,4 +5,5 @@ public class StandartUserRequest {
     public static String help = "/help";
     public static String getData = "запомни";
     public static String outData = "вспомни";
+    public static String outTerm = "дай определение";
 }

@@ -5,5 +5,6 @@ public enum Requests {
     GREETING,
     GETDATA,
     OUTDATA,
-    UNKNOWCOMMAND
+    OUTTERM,
+    UNKNOWCOMMAND,
 }

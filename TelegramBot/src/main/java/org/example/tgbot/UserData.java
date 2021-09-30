@@ -24,6 +24,8 @@ public class UserData {
                 case GREETING -> massageToUser = StandardResponsesToUser.gettingMassage;
                 case GETDATA -> massageToUser = StandardResponsesToUser.gettingGetData;
                 case OUTDATA -> massageToUser = logs.get(id).Data;
+                case OUTTERM -> massageToUser = Dictionary.dictionaryForRandom[
+                        new Random().nextInt(Dictionary.countOfTerms)];
                 case UNKNOWCOMMAND -> massageToUser = StandardResponsesToUser.unknowComand;
             }
         }
@@ -31,15 +33,16 @@ public class UserData {
     }
 
     private static Requests parsingUserMessage(String massage) {
-        var words = Arrays.stream(massage.split(" ")).toList();
-        if (words.contains(StandartUserRequest.help))
+        if (Objects.equals(massage, StandartUserRequest.help))
             return Requests.HELP;
-        if (words.contains(StandartUserRequest.getting))
+        if (Objects.equals(massage, StandartUserRequest.getting))
             return Requests.GREETING;
-        if (words.contains(StandartUserRequest.getData))
+        if (Objects.equals(massage, StandartUserRequest.getData))
             return Requests.GETDATA;
-        if (words.contains(StandartUserRequest.outData))
+        if (Objects.equals(massage, StandartUserRequest.outData))
             return Requests.OUTDATA;
+        if (Objects.equals(massage, StandartUserRequest.outTerm))
+            return Requests.OUTTERM;
         return Requests.UNKNOWCOMMAND;
     }
 }
