@@ -1,43 +1,52 @@
 package org.example.tgbot;
 
-import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class Dictionary {
-    public static final Integer countOfTerms = 19;
-    public static Map<String, String> dictionary = new HashMap<String, String>();
-    public static String[] dictionaryForRandom = new String[countOfTerms];
+    private final Integer countOfTerms = 19;
+    private final Map<String, String> dictionary = new HashMap<String, String>(); // можно убрать
+    private final String[] dictionaryForRandom = new String[countOfTerms];
 
-    public static void AddWordsInDictionary()    {
-        AddNewTerm("Дайсы - игральные кости", 0);
-        AddNewTerm("d - обозначения для игральных костей. Например, d6 - шестигранный куб, а d20 - " +
-                "двадцатигранный", 1);
-        AddNewTerm("Хб - изменения, внесённые ведущим в правила игры",2);
-        AddNewTerm("Хоумрул - изменения, внесённые ведущим в правила игры",3);
-        AddNewTerm("Симуляционизм - вера в игровые обстоятельства, атмосфера и цельность и логичность " +
-                "мира",4);
-        AddNewTerm("Чарник - лист, в котором заполняется информация о персонаже",5);
-        AddNewTerm("Проверка - способ определить, удалось ди действие, заявленное игроком",6);
-        AddNewTerm("Геймизм - желание победить или проиграть в ролевой игре, ожидание честного вызова",7);
-        AddNewTerm("Нарратив - приоритет повествования над цельностью мира. Готовность пойти на уступки" +
-                " ради истории",8);
-        AddNewTerm("Ваншот - игра, сюжет которой рассчитан на одну встречу",9);
-        AddNewTerm("Сериал - игра, сюжет которой рассчитан на несколько встреч",10);
-        AddNewTerm("Компейн - игра, сюжет которой рассчитан на большое количество встреч",11);
-        AddNewTerm("Система - набор правил игры",12);
-        AddNewTerm("Сеттинг - место, время и условия действия, в которых происходит сюжет игры",13);
-        AddNewTerm("Рольнулись - выпали случайным образом при броске игральные костей",14);
-        AddNewTerm("Боёвка - часть правил игры/игровая ситуация, описывающая драки и прочие битвы",15);
-        AddNewTerm("Экшн сцена - эпизод игры, наполненный активными действиями, например битва",16);
-        AddNewTerm("Рулбук - книга правил игры", 17);
-        AddNewTerm("Лор - информация о мире игры", 18);
+    public Dictionary()
+    {
+        addWordsInDictionary();
     }
 
-    private static void AddNewTerm(String term, Integer numberOfTerm)
-    {
+    private void addWordsInDictionary() {
+        addNewTerm("Дайсы - игральные кости", 0);
+        addNewTerm("d - обозначения для игральных костей. Например, d6 - шестигранный куб, а d20 - " +
+                "двадцатигранный", 1);
+        addNewTerm("Хб - изменения, внесённые ведущим в правила игры", 2);
+        addNewTerm("Хоумрул - изменения, внесённые ведущим в правила игры", 3);
+        addNewTerm("Симуляционизм - вера в игровые обстоятельства, атмосфера и цельность и логичность " +
+                "мира", 4);
+        addNewTerm("Чарник - лист, в котором заполняется информация о персонаже", 5);
+        addNewTerm("Проверка - способ определить, удалось ди действие, заявленное игроком", 6);
+        addNewTerm("Геймизм - желание победить или проиграть в ролевой игре, ожидание честного вызова", 7);
+        addNewTerm("Нарратив - приоритет повествования над цельностью мира. Готовность пойти на уступки" +
+                " ради истории", 8);
+        addNewTerm("Ваншот - игра, сюжет которой рассчитан на одну встречу", 9);
+        addNewTerm("Сериал - игра, сюжет которой рассчитан на несколько встреч", 10);
+        addNewTerm("Компейн - игра, сюжет которой рассчитан на большое количество встреч", 11);
+        addNewTerm("Система - набор правил игры", 12);
+        addNewTerm("Сеттинг - место, время и условия действия, в которых происходит сюжет игры", 13);
+        addNewTerm("Рольнулись - выпали случайным образом при броске игральные костей", 14);
+        addNewTerm("Боёвка - часть правил игры/игровая ситуация, описывающая драки и прочие битвы", 15);
+        addNewTerm("Экшн сцена - эпизод игры, наполненный активными действиями, например битва", 16);
+        addNewTerm("Рулбук - книга правил игры", 17);
+        addNewTerm("Лор - информация о мире игры", 18);
+    }
+
+    private void addNewTerm(String term, Integer numberOfTerm) {
         dictionaryForRandom[numberOfTerm] = term;
-        var termAndMeaning = dictionaryForRandom[numberOfTerm].split(" - ",2);
+        var termAndMeaning = dictionaryForRandom[numberOfTerm].split(" - ", 2);
         dictionary.put(termAndMeaning[0], termAndMeaning[1]);
+    }
+
+    public String getTerm()
+    {
+        return dictionaryForRandom[new Random().nextInt(countOfTerms)];
     }
 }

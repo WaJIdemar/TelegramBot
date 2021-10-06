@@ -3,15 +3,18 @@ package org.example.tgbot;
 import java.util.*;
 
 public class UserData {
-    public static Map<Long, User> logs = new HashMap<Long, User>();
+    private final Map<Long, User> logs = new HashMap<Long, User>();
+    private final Dictionary dictionary = new Dictionary();
+    private final StandardResponsesToUser standardResponsesToUser = new StandardResponsesToUser();
+    private final StandardUserRequest standardUserRequest = new StandardUserRequest();
 
-    public static String massageToUser(long id, String massage) {
+    public  String massageToUser(long id, String massage) {
         massage = massage.toLowerCase(Locale.ROOT);
         String massageToUser = "";
         if (logs.get(id) == null) {
             logs.put(id, new User(id));
             logs.get(id).log.add(massage);
-            massageToUser = StandardResponsesToUser.startMassage;
+            massageToUser = standardResponsesToUser.startMassage;
         } else if (Objects.equals(logs.get(id).log.get(logs.get(id).log.size() - 1), "запомни")) {
             logs.get(id).AddData(massage);
             logs.get(id).log.add(massage);
@@ -20,28 +23,27 @@ public class UserData {
             logs.get(id).log.add(massage);
             var result = parsingUserMessage(massage);
             switch (result) {
-                case HELP -> massageToUser = StandardResponsesToUser.helpMassage;
-                case GREETING -> massageToUser = StandardResponsesToUser.gettingMassage;
-                case GETDATA -> massageToUser = StandardResponsesToUser.gettingGetData;
+                case HELP -> massageToUser = standardResponsesToUser.helpMassage;
+                case GREETING -> massageToUser = standardResponsesToUser.gettingMassage;
+                case GETDATA -> massageToUser = standardResponsesToUser.gettingGetData;
                 case OUTDATA -> massageToUser = logs.get(id).Data;
-                case OUTTERM -> massageToUser = Dictionary.dictionaryForRandom[
-                        new Random().nextInt(Dictionary.countOfTerms)];
-                case UNKNOWCOMMAND -> massageToUser = StandardResponsesToUser.unknowComand;
+                case OUTTERM -> massageToUser = dictionary.getTerm();
+                case UNKNOWCOMMAND -> massageToUser = standardResponsesToUser.unknownCommand;
             }
         }
         return massageToUser;
     }
 
-    private static Requests parsingUserMessage(String massage) {
-        if (Objects.equals(massage, StandartUserRequest.help))
+    private  Requests parsingUserMessage(String massage) {
+        if (Objects.equals(massage, standardUserRequest.help))
             return Requests.HELP;
-        if (Objects.equals(massage, StandartUserRequest.getting))
+        if (Objects.equals(massage, standardUserRequest.getting))
             return Requests.GREETING;
-        if (Objects.equals(massage, StandartUserRequest.getData))
+        if (Objects.equals(massage, standardUserRequest.getData))
             return Requests.GETDATA;
-        if (Objects.equals(massage, StandartUserRequest.outData))
+        if (Objects.equals(massage, standardUserRequest.outData))
             return Requests.OUTDATA;
-        if (Objects.equals(massage, StandartUserRequest.outTerm))
+        if (Objects.equals(massage, standardUserRequest.outTerm))
             return Requests.OUTTERM;
         return Requests.UNKNOWCOMMAND;
     }
