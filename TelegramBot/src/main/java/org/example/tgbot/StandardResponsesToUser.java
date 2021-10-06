@@ -1,7 +1,7 @@
 package org.example.tgbot;
 
 public class StandardResponsesToUser {
-    public  String startMassage = "Привет я чат-бот, чтобы узнать о моих возможностьях напиши /help";
+    public  String startMassage = "Привет я чат-бот, чтобы узнать о моих возможностьях напиши помощь";
     public  String helpMassage = """
             Я могу:
             Запоминать ваше текстовое сообщение после команды "Запомни"

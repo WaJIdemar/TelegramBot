@@ -8,20 +8,20 @@ public class UserData {
     private final StandardResponsesToUser standardResponsesToUser = new StandardResponsesToUser();
     private final StandardUserRequest standardUserRequest = new StandardUserRequest();
 
-    public  String massageToUser(long id, String massage) {
-        massage = massage.toLowerCase(Locale.ROOT);
+    public  String massageToUser(long id, String message) {
+        message = message.toLowerCase(Locale.ROOT);
         String massageToUser = "";
         if (logs.get(id) == null) {
             logs.put(id, new User(id));
-            logs.get(id).log.add(massage);
+            logs.get(id).log.add(message);
             massageToUser = standardResponsesToUser.startMassage;
         } else if (Objects.equals(logs.get(id).log.get(logs.get(id).log.size() - 1), "запомни")) {
-            logs.get(id).AddData(massage);
-            logs.get(id).log.add(massage);
+            logs.get(id).AddData(message);
+            logs.get(id).log.add(message);
             massageToUser = "Запомнил";
         } else {
-            logs.get(id).log.add(massage);
-            var result = parsingUserMessage(massage);
+            logs.get(id).log.add(message);
+            var result = parsingUserMessage(message);
             switch (result) {
                 case HELP -> massageToUser = standardResponsesToUser.helpMassage;
                 case GREETING -> massageToUser = standardResponsesToUser.gettingMassage;
