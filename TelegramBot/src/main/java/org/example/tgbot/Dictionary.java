@@ -6,7 +6,7 @@ import java.util.Random;
 
 public class Dictionary {
     private final Integer countOfTerms = 19;
-    private final Map<String, String> dictionary = new HashMap<String, String>(); // можно убрать
+    private final Map<String, String> dictionary = new HashMap<String, String>();
     private final String[] dictionaryForRandom = new String[countOfTerms];
 
     public Dictionary()
