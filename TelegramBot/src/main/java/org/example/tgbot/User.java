@@ -5,16 +5,11 @@ import java.util.List;
 
 public class User {
     public long id;
-    public List<String> log;
-    public String Data;
+    public List<String> logs;
 
     public User(long userId) {
         id = userId;
-        log = new ArrayList<>();
-    }
-    public void AddData(String OData)
-    {
-        Data = OData;
+        logs = new ArrayList<>();
     }
 }
 

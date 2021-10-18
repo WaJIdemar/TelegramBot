@@ -3,9 +3,7 @@ package org.example.tgbot;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -14,8 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TelegramBot extends TelegramLongPollingBot {
-    private final String Token = System.getenv("TOKEN");
-    private final String Name = System.getenv("NAME");
+    private final String Token = System.getenv("TELEGRAM_BOT_TOKEN");
+    private final String Name = System.getenv("TELEGRAM_BOT_NAME");
     private final UserData userData = new UserData();
 
     @Override
@@ -33,13 +31,27 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage() && update.getMessage().hasText()) {
             SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
             message.setChatId(update.getMessage().getChatId().toString());
-
             try {
                 setButtons(message);
-                message.setText(userData.massageToUser(update.getMessage().getChatId(), update.getMessage().getText()));
+                message.setText(userData.messageToUser(update.getMessage().getChatId(), update.getMessage().getText()));
                 execute(message); // Call method to send the message
             } catch (TelegramApiException e) {
-                e.printStackTrace();
+                message.setChatId(System.getenv("MY_CHAT_ID_TELEGRAM"));
+                message.setText("Ошибка telegram:\n" + e);
+                try {
+                    execute(message);
+                } catch (TelegramApiException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            catch (Exception e){
+                message.setChatId(System.getenv("MY_CHAT_ID_TELEGRAM"));
+                message.setText("Ошибка логики:\n" + e);
+                try {
+                    execute(message);
+                } catch (TelegramApiException ex) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
