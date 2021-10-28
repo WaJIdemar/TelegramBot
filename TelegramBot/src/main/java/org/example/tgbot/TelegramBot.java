@@ -33,8 +33,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
             message.setChatId(update.getMessage().getChatId().toString());
             try {
-                message.setText(userData.messageToUser(update.getMessage().getChatId(), update.getMessage().getText()));
-                setButtons(message, userData.getButtonsMenuStatus());
+                ResponseToUser responseToUser = userData.responseUser(update.getMessage().getChatId(),
+                        update.getMessage().getText());
+                message.setText(responseToUser.getMessageToUser());
+                setButtons(message, responseToUser.getButtonsMenuStatus());
                 execute(message); // Call method to send the message
             } catch (TelegramApiException e) {
                 message.setChatId(System.getenv("MY_CHAT_ID_TELEGRAM"));

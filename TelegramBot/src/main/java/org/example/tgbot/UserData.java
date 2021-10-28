@@ -7,16 +7,16 @@ public class UserData {
     private final DictionaryTerms dictionaryTerms = new DictionaryTerms();
     private final StandardResponsesToUser standardResponsesToUser = new StandardResponsesToUser();
     private final StandardUserRequest standardUserRequest = new StandardUserRequest();
-    private ButtonsMenuStatus buttonsMenuStatus = ButtonsMenuStatus.STARTMENU;
 
-    public String messageToUser(long id, String message) {
+    public ResponseToUser responseUser(long id, String message) {
         message = message.toLowerCase(Locale.ROOT);
         String messageToUser = "";
+        ButtonsMenuStatus buttonsMenuStatus = ButtonsMenuStatus.STARTMENU;
         if (users.get(id) == null) {
             users.put(id, new User(id));
             users.get(id).logs.add(message);
             messageToUser = standardResponsesToUser.startMessage;
-            changeButtonsMenuStatus(Requests.GREETING);
+            buttonsMenuStatus = changeButtonsMenuStatus(Requests.GREETING);
         } else {
             users.get(id).logs.add(message);
             var result = parsingUserMessage(message);
@@ -27,7 +27,7 @@ public class UserData {
                 case UNKNOWCOMMAND -> messageToUser = standardResponsesToUser.unknownCommand;
             }
         }
-        return messageToUser;
+        return new ResponseToUser(messageToUser, buttonsMenuStatus);
     }
 
     private Requests parsingUserMessage(String message) {
@@ -40,13 +40,9 @@ public class UserData {
         return Requests.UNKNOWCOMMAND;
     }
 
-    private void changeButtonsMenuStatus(Requests requests){
-        switch (requests){
-            case HELP, GREETING, OUTTERM, UNKNOWCOMMAND -> buttonsMenuStatus = ButtonsMenuStatus.STARTMENU;
-        }
-    }
-
-    public ButtonsMenuStatus getButtonsMenuStatus(){
-        return buttonsMenuStatus;
+    private ButtonsMenuStatus changeButtonsMenuStatus(Requests requests){
+        return switch (requests) {
+            case HELP, GREETING, OUTTERM, UNKNOWCOMMAND -> ButtonsMenuStatus.STARTMENU;
+        };
     }
 }
