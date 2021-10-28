@@ -7,6 +7,7 @@ public class UserData {
     private final DictionaryTerms dictionaryTerms = new DictionaryTerms();
     private final StandardResponsesToUser standardResponsesToUser = new StandardResponsesToUser();
     private final StandardUserRequest standardUserRequest = new StandardUserRequest();
+    private ButtonsMenuStatus buttonsMenuStatus = ButtonsMenuStatus.STARTMENU;
 
     public String messageToUser(long id, String message) {
         message = message.toLowerCase(Locale.ROOT);
@@ -15,6 +16,7 @@ public class UserData {
             users.put(id, new User(id));
             users.get(id).logs.add(message);
             messageToUser = standardResponsesToUser.startMessage;
+            changeButtonsMenuStatus(Requests.GREETING);
         } else {
             users.get(id).logs.add(message);
             var result = parsingUserMessage(message);
@@ -36,5 +38,15 @@ public class UserData {
         if (Objects.equals(message, standardUserRequest.outTerm))
             return Requests.OUTTERM;
         return Requests.UNKNOWCOMMAND;
+    }
+
+    private void changeButtonsMenuStatus(Requests requests){
+        switch (requests){
+            case HELP, GREETING, OUTTERM, UNKNOWCOMMAND -> buttonsMenuStatus = ButtonsMenuStatus.STARTMENU;
+        }
+    }
+
+    public ButtonsMenuStatus getButtonsMenuStatus(){
+        return buttonsMenuStatus;
     }
 }

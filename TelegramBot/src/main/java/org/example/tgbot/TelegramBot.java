@@ -33,8 +33,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
             message.setChatId(update.getMessage().getChatId().toString());
             try {
-                setButtons(message);
                 message.setText(userData.messageToUser(update.getMessage().getChatId(), update.getMessage().getText()));
+                setButtons(message, userData.getButtonsMenuStatus());
                 execute(message); // Call method to send the message
             } catch (TelegramApiException e) {
                 message.setChatId(System.getenv("MY_CHAT_ID_TELEGRAM"));
@@ -56,7 +56,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public synchronized void setButtons(SendMessage sendMessage) {
+    public synchronized void setButtons(SendMessage sendMessage, ButtonsMenuStatus buttonsMenuStatus) {
         // Создаем клавиуатуру
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
@@ -66,13 +66,17 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         // Создаем список строк клавиатуры
         List<KeyboardRow> keyboard = new ArrayList<>();
-        for (int i = 0; i < startButtonsMenu.getCountRows(); i++) {
-            List<String> buttons = startButtonsMenu.getButtonsRow(i);
-            KeyboardRow keyboardRow = new KeyboardRow();
-            for (String button : buttons) {
-                keyboardRow.add(new KeyboardButton(button));
-            }
-            keyboard.add(keyboardRow);
+        switch (buttonsMenuStatus) {
+            case STARTMENU:
+                for (int i = 0; i < startButtonsMenu.getCountRows(); i++) {
+                    List<String> buttons = startButtonsMenu.getButtonsRow(i);
+                    KeyboardRow keyboardRow = new KeyboardRow();
+                    for (String button : buttons) {
+                        keyboardRow.add(new KeyboardButton(button));
+                    }
+                    keyboard.add(keyboardRow);
+                }
+                break;
         }
 
         replyKeyboardMarkup.setKeyboard(keyboard);
