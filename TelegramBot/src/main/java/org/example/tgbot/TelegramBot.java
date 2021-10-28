@@ -15,6 +15,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String Token = System.getenv("TELEGRAM_BOT_TOKEN");
     private final String Name = System.getenv("TELEGRAM_BOT_NAME");
     private final UserData userData = new UserData();
+    private final StartButtonsMenu startButtonsMenu = new StartButtonsMenu();
 
     @Override
     public String getBotUsername() {
@@ -43,8 +44,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } catch (TelegramApiException ex) {
                     ex.printStackTrace();
                 }
-            }
-            catch (Exception e){
+            } catch (Exception e) {
                 message.setChatId(System.getenv("MY_CHAT_ID_TELEGRAM"));
                 message.setText("Ошибка логики:\n" + e);
                 try {
@@ -66,22 +66,15 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         // Создаем список строк клавиатуры
         List<KeyboardRow> keyboard = new ArrayList<>();
+        for (int i = 0; i < startButtonsMenu.getCountRows(); i++) {
+            List<String> buttons = startButtonsMenu.getButtonsRow(i);
+            KeyboardRow keyboardRow = new KeyboardRow();
+            for (String button : buttons) {
+                keyboardRow.add(new KeyboardButton(button));
+            }
+            keyboard.add(keyboardRow);
+        }
 
-        // Первая строчка клавиатуры
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
-        // Добавляем кнопки в первую строчку клавиатуры
-        keyboardFirstRow.add(new KeyboardButton("Привет"));
-        keyboardFirstRow.add(new KeyboardButton("Дай определение"));
-
-        // Вторая строчка клавиатуры
-        KeyboardRow keyboardSecondRow = new KeyboardRow();
-        // Добавляем кнопки во вторую строчку клавиатуры
-        keyboardSecondRow.add(new KeyboardButton("Помощь"));
-
-        // Добавляем все строчки клавиатуры в список
-        keyboard.add(keyboardFirstRow);
-        keyboard.add(keyboardSecondRow);
-        // и устанваливаем этот список нашей клавиатуре
         replyKeyboardMarkup.setKeyboard(keyboard);
     }
 }
