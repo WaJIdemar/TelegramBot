@@ -1,15 +1,24 @@
 package org.example.tgbot;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class User {
-    public long id;
-    public List<String> logs;
+    private final long id;
+    private DialogState dialogState;
 
     public User(long userId) {
         id = userId;
-        logs = new ArrayList<>();
+        dialogState = DialogState.DEFAULT;
+    }
+
+    public void changeDialogState(DialogState newDialogState) {
+        dialogState = newDialogState;
+    }
+
+    public DialogState getDialogState() {
+        return dialogState;
+    }
+
+    public long getUserId() {
+        return id;
     }
 }
 

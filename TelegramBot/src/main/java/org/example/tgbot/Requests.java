@@ -3,6 +3,6 @@ package org.example.tgbot;
 public enum Requests {
     HELP,
     GREETING,
-    OUTTERM,
-    UNKNOWCOMMAND,
+    OUT_TERM,
+    UNKNOWN_COMMAND,
 }

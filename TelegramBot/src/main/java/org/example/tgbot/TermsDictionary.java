@@ -1,17 +1,13 @@
 package org.example.tgbot;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
-public class DictionaryTerms {
-    private final Integer countOfTerms = 19;
+public class TermsDictionary {
     private final Map<String, String> dictionaryTerms = new HashMap<>();
-    private final String[] dictionaryForRandom = new String[countOfTerms];
-    private Integer numberOfTerm = 0;
+    private final List<String> terms = new ArrayList<>();
     private final Random random = new Random();
 
-    public DictionaryTerms() {
+    public TermsDictionary() {
         addWordsInDictionary();
     }
 
@@ -39,12 +35,11 @@ public class DictionaryTerms {
     }
 
     private void addNewTerm(String term, String definition) {
-        dictionaryForRandom[numberOfTerm] = term + " - " + definition;
+        terms.add(term + " - " + definition);
         dictionaryTerms.put(term, definition);
-        numberOfTerm++;
     }
 
     public String getRandomTerm() {
-        return dictionaryForRandom[random.nextInt(countOfTerms)];
+        return terms.get(random.nextInt(terms.size()));
     }
 }

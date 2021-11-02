@@ -12,10 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TelegramBot extends TelegramLongPollingBot {
-    private final String Token = System.getenv("TELEGRAM_BOT_TOKEN");
-    private final String Name = System.getenv("TELEGRAM_BOT_NAME");
-    private final UserData userData = new UserData();
-    private final StartButtonsMenu startButtonsMenu = new StartButtonsMenu();
+    private final String Name;
+    private final String Token;
+    private final BotLogic botLogic;
+    private final AppVk appVk;
+
+    public TelegramBot(String name, String token, BotLogic botLogic, AppVk appVk){
+        Name = name;
+        Token = token;
+        this.botLogic = botLogic;
+        this.appVk = appVk;
+    }
 
     @Override
     public String getBotUsername() {
@@ -33,22 +40,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
             message.setChatId(update.getMessage().getChatId().toString());
             try {
-                ResponseToUser responseToUser = userData.responseUser(update.getMessage().getChatId(),
+                ResponseToUser responseToUser = botLogic.responseUser(update.getMessage().getChatId(),
                         update.getMessage().getText());
                 message.setText(responseToUser.getMessageToUser());
                 setButtons(message, responseToUser.getButtonsMenuStatus());
                 execute(message); // Call method to send the message
-            } catch (TelegramApiException e) {
-                message.setChatId(System.getenv("MY_CHAT_ID_TELEGRAM"));
-                message.setText("Ошибка telegram:\n" + e);
-                try {
-                    execute(message);
-                } catch (TelegramApiException ex) {
-                    ex.printStackTrace();
-                }
             } catch (Exception e) {
                 message.setChatId(System.getenv("MY_CHAT_ID_TELEGRAM"));
-                message.setText("Ошибка логики:\n" + e);
+                message.setText("Ошибка telegram-bot'a:\n" + e);
                 try {
                     execute(message);
                 } catch (TelegramApiException ex) {
@@ -58,7 +57,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public synchronized void setButtons(SendMessage sendMessage, ButtonsMenuStatus buttonsMenuStatus) {
+    public synchronized void setButtons(SendMessage sendMessage, List<List<String>> buttonsMenu) {
         // Создаем клавиуатуру
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
@@ -68,17 +67,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         // Создаем список строк клавиатуры
         List<KeyboardRow> keyboard = new ArrayList<>();
-        switch (buttonsMenuStatus) {
-            case STARTMENU:
-                for (int i = 0; i < startButtonsMenu.getCountRows(); i++) {
-                    List<String> buttons = startButtonsMenu.getButtonsRow(i);
-                    KeyboardRow keyboardRow = new KeyboardRow();
-                    for (String button : buttons) {
-                        keyboardRow.add(new KeyboardButton(button));
-                    }
-                    keyboard.add(keyboardRow);
-                }
-                break;
+
+        for (List<String> row : buttonsMenu) {
+            KeyboardRow keyboardRow = new KeyboardRow();
+            for (String button : row) {
+                keyboardRow.add(new KeyboardButton(button));
+            }
+            keyboard.add(keyboardRow);
+
         }
 
         replyKeyboardMarkup.setKeyboard(keyboard);

@@ -1,10 +1,18 @@
 package org.example.tgbot;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public interface ButtonsMenu {
-    Integer getCountRows();
+public class ButtonsMenu {
+    private final List<List<String>> defaultButtonsMenu;
 
-    List<String> getButtonsRow(int index);
+    public ButtonsMenu(){
+        defaultButtonsMenu = new ArrayList<>();
+        defaultButtonsMenu.add(List.of("Привет", "Дай определение"));
+        defaultButtonsMenu.add(List.of("Помощь"));
+    }
 
+    public List<List<String>> getDefaultButtonsMenu(){
+        return defaultButtonsMenu;
+    }
 }
