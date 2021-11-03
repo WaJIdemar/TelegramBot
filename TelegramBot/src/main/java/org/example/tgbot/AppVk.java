@@ -3,6 +3,7 @@ package org.example.tgbot;
 import com.vk.api.sdk.client.TransportClient;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.ServiceActor;
+import com.vk.api.sdk.httpclient.HttpTransportClient;
 import com.vk.api.sdk.objects.enums.WallFilter;
 import com.vk.api.sdk.objects.wall.WallpostFull;
 
@@ -12,10 +13,14 @@ public class AppVk {
     private WallpostFull lastPost;
     private final Integer idVkGroup;
 
-    public AppVk(Integer appId, String appSecretKey, String appAccessToken, Integer idVkGroup, TransportClient transportClient) {
+    public AppVk() {
+        Integer appId = Integer.parseInt(System.getenv("APP_VK_ID"));
+        String appSecretKey = System.getenv("APP_VK_SECRET_KEY");
+        String appAccessToken = System.getenv("APP_VK_ACCESS_TOKEN");
+        idVkGroup = Integer.parseInt(System.getenv("ID_VK_GROUP"));
+        TransportClient transportClient = HttpTransportClient.getInstance();
         vk = new VkApiClient(transportClient);
         actor = new ServiceActor(appId, appSecretKey, appAccessToken);
-        this.idVkGroup = idVkGroup;
         lastPost = getLastPostOnWall();
     }
 
@@ -45,7 +50,7 @@ public class AppVk {
         }
     }
 
-    public WallpostFull getLastPost(){
+    public WallpostFull getLastPost() {
         return lastPost;
     }
 }

@@ -16,12 +16,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String Token;
     private final BotLogic botLogic;
     private final AppVk appVk;
+    private Boolean appVkStatus;
 
-    public TelegramBot(String name, String token, BotLogic botLogic, AppVk appVk){
+    public TelegramBot(String name, String token, BotLogic botLogic) {
         Name = name;
         Token = token;
         this.botLogic = botLogic;
-        this.appVk = appVk;
+        this.appVk = new AppVk();
+        appVkStatus = true;
     }
 
     @Override
@@ -70,13 +72,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         for (List<String> row : buttonsMenu) {
             KeyboardRow keyboardRow = new KeyboardRow();
-            for (String button : row) {
+            for (String button : row)
                 keyboardRow.add(new KeyboardButton(button));
-            }
             keyboard.add(keyboardRow);
-
         }
-
         replyKeyboardMarkup.setKeyboard(keyboard);
     }
 }
