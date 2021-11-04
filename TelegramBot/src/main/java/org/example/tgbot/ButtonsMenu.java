@@ -15,6 +15,7 @@ public class ButtonsMenu {
         defaultButtonsMenu.add(List.of("Помощь"));
         randomOrCertainTerm = new ArrayList<>();
         randomOrCertainTerm.add(List.of("Рандомное определение", "Конкретное определение"));
+        randomOrCertainTerm.add(List.of(("/Отмена")));
         yesOrNo = new ArrayList<>();
         yesOrNo.add(List.of("Да", "Нет"));
         cancel = new ArrayList<>();

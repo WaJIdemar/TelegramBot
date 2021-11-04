@@ -6,5 +6,7 @@ public enum Requests {
     OUT_TERM,
     RANDOM_TERM,
     CERTAIN_TERM,
+    CANCEL,
+    CONFIRMATION,
     UNKNOWN_COMMAND,
 }
