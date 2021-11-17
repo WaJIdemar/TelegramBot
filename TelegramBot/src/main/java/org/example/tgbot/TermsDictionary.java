@@ -3,8 +3,8 @@ package org.example.tgbot;
 import java.util.*;
 
 public class TermsDictionary {
-    private final Map<String, String> termsDictionary = new HashMap<>();
-    private final List<String> terms = new ArrayList<>();
+    private final Map<String, DictionItem> termsDictionary = new HashMap<>();
+    private final List<DictionItem> terms = new ArrayList<>();
     private final Random random = new Random();
     private final LevenshteinCalculator levenshteinCalculator = new LevenshteinCalculator();
 
@@ -36,11 +36,11 @@ public class TermsDictionary {
     }
 
     private void addNewTerm(String term, String definition) {
-        terms.add(term + " - " + definition);
-        termsDictionary.put(term, definition);
+        terms.add(new DictionItem(term, definition));
+        termsDictionary.put(term, new DictionItem(term, definition));
     }
 
-    public String getCertainDefinition(String term) {
+    public DictionItem getCertainDefinition(String term) {
         return termsDictionary.get(term);
     }
 
@@ -49,23 +49,22 @@ public class TermsDictionary {
     }
 
     public String searchSimilarTermOnDictionary(String word) {
-        double minVal = word.length();
-        var minWord = "";
-        for (Map.Entry<String, String> pair : termsDictionary.entrySet()) {
+        var minWords = new  ArrayList<String>();
+        for (Map.Entry<String, DictionItem> pair : termsDictionary.entrySet()) {
             var levenshtein = levenshteinCalculator.levenshteinDistance(pair.getKey(), word);
-            if (levenshtein < minVal) {
-                minVal = levenshtein;
-                minWord = pair.getKey();
+            if (levenshtein < 3) {
+                minWords.add(pair.getKey());
             }
         }
-        if (Objects.equals(minWord, "") || minVal > 2) {
+        if (Objects.equals(minWords, new ArrayList<String>())) {
             return "";
         } else {
-            return minWord;
+            String minWordsString = minWords.toString();
+            return minWordsString.substring(1, minWordsString.length() - 1);
         }
     }
 
-    public String getRandomTerm() {
+    public DictionItem getRandomTerm() {
         return terms.get(random.nextInt(terms.size()));
     }
 }

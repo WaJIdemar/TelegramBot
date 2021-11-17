@@ -7,112 +7,114 @@ public class BotLogic {
     private final TermsDictionary termsDictionary = new TermsDictionary();
     private final StandardResponsesToUser standardResponsesToUser = new StandardResponsesToUser();
     private final StandardUserRequest standardUserRequest = new StandardUserRequest();
-    private final ButtonsMenu allButtonsMenu = new ButtonsMenu();
+    private final ChatClient chatClient;
 
-    public ResponseToUser responseUser(long id, String message) {
+    public BotLogic(ChatClient chatClient) {
+        this.chatClient = chatClient;
+    }
+
+    public void respondUser(Long id, String message) {
         message = message.toLowerCase(Locale.ROOT);
-        String messageToUser = "";
-        List<List<String>> buttonsMenu = allButtonsMenu.getDefaultButtonsMenu();
         if (!users.containsKey(id)) {
             users.put(id, new User(id));
-            messageToUser = standardResponsesToUser.startMessage;
-            return new ResponseToUser(messageToUser, buttonsMenu);
+            chatClient.sendMessage(id, standardResponsesToUser.startMessage, new DefaultKeyboard());
+            return;
         }
-        var request = parsingUserMessage(message);
+        var request = parsUserMessage(message);
         switch (users.get(id).getDialogState()) {
-            case WAIT_TERM -> {
+            case WAIT_TERM -> { // Ждём пока пользователь введёт конкретный термин
                 if (request == Requests.CANCEL) {
                     users.get(id).changeDialogState(DialogState.DEFAULT);
-                    messageToUser = standardResponsesToUser.cancel;
+                    chatClient.sendMessage(id, standardResponsesToUser.cancel, new DefaultKeyboard());
                 } else {
                     if (termsDictionary.containsTermOnDictionary(message)) {
-                        messageToUser = termsDictionary.getCertainDefinition(message);
+                        DictionItem dictionItem = termsDictionary.getCertainDefinition(message);
+                        String text = dictionItem.term.substring(0, 1).toUpperCase() + dictionItem.term.substring(1)
+                                + " - " + dictionItem.definition;
+                        chatClient.sendMessage(id, text, new DefaultKeyboard());
                         users.get(id).changeDialogState(DialogState.DEFAULT);
                     } else {
                         String similarTerm = termsDictionary.searchSimilarTermOnDictionary(message);
+                        users.get(id).changeUserTerm(message);
                         if (Objects.equals(similarTerm, "")) {
-                            messageToUser = standardResponsesToUser.termNotFound;
+                            chatClient.sendMessage(id, standardResponsesToUser.termNotFound.formatted(message), new YesOrNoKeyBoard());
                             users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
                         } else {
-                            messageToUser = standardResponsesToUser.userAgree + similarTerm;
-                            users.get(id).changeUserTerm(similarTerm);
-                            users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_TERM_INPUT);
+                            chatClient.sendMessage(id, standardResponsesToUser.userAgree.formatted(similarTerm), new CancelKeyBoard());
+                            users.get(id).changeDialogState(DialogState.WAIT_WORD_INPUT);
                         }
-                        buttonsMenu = allButtonsMenu.getYesOrNo();
                     }
                 }
             }
-            case WAIT_DEFINITION -> {
+            case WAIT_WORD_INPUT -> { // Ждём пока пользователь введёт слово, чтобы выдать определение или попросить написать определение
+                if (request == Requests.CANCEL) {
+                    chatClient.sendMessage(id, standardResponsesToUser.writeDefinition.formatted(users.get(id).getUserTerm()), new YesOrNoKeyBoard());
+                    users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
+                } else {
+                    DictionItem dictionItem = termsDictionary.getCertainDefinition(message);
+                    String text = dictionItem.term.substring(0, 1).toUpperCase() + dictionItem.term.substring(1)
+                            + " - " + dictionItem.definition;
+                    chatClient.sendMessage(id, text, new DefaultKeyboard());
+                    users.get(id).changeDialogState(DialogState.DEFAULT);
+                }
+            }
+            case WAIT_DEFINITION -> { // Ждём опеределение от пользователя
                 if (request == Requests.CANCEL)
-                    messageToUser = standardResponsesToUser.cancel;
+                    chatClient.sendMessage(id, standardResponsesToUser.cancel, new DefaultKeyboard());
                 else
-                    messageToUser = standardResponsesToUser.definitionSentForConsideration;
+                    chatClient.sendMessage(id, standardResponsesToUser.definitionSentForConsideration, new DefaultKeyboard());
                 users.get(id).changeDialogState(DialogState.DEFAULT);
             }
-            case WAIT_CONFIRMATION_DEFINITION_INPUT -> {
+            case WAIT_CONFIRMATION_DEFINITION_INPUT -> { // Ждём подтверждения, что пользователь хочет написать определение
                 if (request == Requests.CONFIRMATION) {
-                    messageToUser = standardResponsesToUser.waitDefinition;
-                    buttonsMenu = allButtonsMenu.getCancel();
+                    chatClient.sendMessage(id, standardResponsesToUser.waitDefinition.formatted(users.get(id).getUserTerm()), new CancelKeyBoard());
                     users.get(id).changeDialogState(DialogState.WAIT_DEFINITION);
                 } else {
-                    messageToUser = standardResponsesToUser.cancel;
+                    chatClient.sendMessage(id, standardResponsesToUser.cancel, new DefaultKeyboard());
                     users.get(id).changeDialogState(DialogState.DEFAULT);
                 }
             }
-            case WAIT_CONFIRMATION_TERM_INPUT -> {
-                if (request == Requests.CONFIRMATION) {
-                    messageToUser = termsDictionary.getCertainDefinition(users.get(id).getUserTerm());
-                    users.get(id).changeDialogState(DialogState.DEFAULT);
-                } else {
-                    messageToUser = standardResponsesToUser.writeDefinition;
-                    buttonsMenu = allButtonsMenu.getYesOrNo();
-                    users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
-                }
-            }
-            case WAIT_RANDOM_OR_CERTAIN_TERM -> {
+            case WAIT_RANDOM_OR_CERTAIN_TERM -> { // Ждём какое определение хочет пользователь конкретно или конкретное
                 switch (request) {
                     case RANDOM_TERM -> {
-                        messageToUser = termsDictionary.getRandomTerm();
+                        DictionItem dictionItem = termsDictionary.getRandomTerm();
+                        String text = dictionItem.term.substring(0, 1).toUpperCase() + dictionItem.term.substring(1)
+                                + " - " + dictionItem.definition;
+                        chatClient.sendMessage(id, text, new DefaultKeyboard());
                         users.get(id).changeDialogState(DialogState.DEFAULT);
                     }
                     case CERTAIN_TERM -> {
-                        messageToUser = standardResponsesToUser.waitTerm;
+                        chatClient.sendMessage(id, standardResponsesToUser.waitTerm, new CancelKeyBoard());
                         users.get(id).changeDialogState(DialogState.WAIT_TERM);
-                        buttonsMenu = allButtonsMenu.getCancel();
                     }
                     case CANCEL -> {
-                        messageToUser = standardResponsesToUser.cancel;
+                        chatClient.sendMessage(id, standardResponsesToUser.cancel, new DefaultKeyboard());
                         users.get(id).changeDialogState(DialogState.DEFAULT);
-                        buttonsMenu = allButtonsMenu.getDefaultButtonsMenu();
                     }
                     default -> {
-                        messageToUser = standardResponsesToUser.unknownCommand;
-                        buttonsMenu = allButtonsMenu.getDefaultButtonsMenu();
+                        chatClient.sendMessage(id, standardResponsesToUser.unknownCommand, new DefaultKeyboard());
                         users.get(id).changeDialogState(DialogState.DEFAULT);
                     }
                 }
             }
-            case DEFAULT -> {
+            case DEFAULT -> { // Стандартное состояние
                 switch (request) {
-                    case HELP -> messageToUser = standardResponsesToUser.helpMessage;
-                    case GREETING -> messageToUser = standardResponsesToUser.gettingMessage;
+                    case HELP -> chatClient.sendMessage(id, standardResponsesToUser.helpMessage, new DefaultKeyboard());
+                    case GREETING -> chatClient.sendMessage(id, standardResponsesToUser.gettingMessage, new DefaultKeyboard());
                     case OUT_TERM -> {
-                        messageToUser = standardResponsesToUser.outTerm;
-                        buttonsMenu = allButtonsMenu.getRandomOrCertainTerm();
+                        chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyBoard());
                         users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
                     }
                     default -> {
-                        messageToUser = standardResponsesToUser.unknownCommand;
-                        buttonsMenu = allButtonsMenu.getDefaultButtonsMenu();
+                        chatClient.sendMessage(id, standardResponsesToUser.unknownCommand, new DefaultKeyboard());
                         users.get(id).changeDialogState(DialogState.DEFAULT);
                     }
                 }
             }
         }
-        return new ResponseToUser(messageToUser, buttonsMenu);
     }
 
-    private Requests parsingUserMessage(String message) {
+    private Requests parsUserMessage(String message) {
         if (Objects.equals(message, standardUserRequest.help))
             return Requests.HELP;
         if (Objects.equals(message, standardUserRequest.getting))

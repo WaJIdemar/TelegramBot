@@ -4,26 +4,29 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TelegramBot extends TelegramLongPollingBot {
     private final String Name;
     private final String Token;
-    private final BotLogic botLogic;
-    private final AppVk appVk;
-    private Boolean appVkStatus;
+    private BotLogic botLogic;
+    private final String adminChatId;
 
-    public TelegramBot(String name, String token, BotLogic botLogic) {
+    public TelegramBot(String name, String token, String adminChatId) {
         Name = name;
         Token = token;
+        this.adminChatId = adminChatId;
+    }
+
+    public void setBotLogic(BotLogic botLogic) {
         this.botLogic = botLogic;
-        this.appVk = new AppVk();
-        appVkStatus = true;
     }
 
     @Override
@@ -39,16 +42,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
-            SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
-            message.setChatId(update.getMessage().getChatId().toString());
             try {
-                ResponseToUser responseToUser = botLogic.responseUser(update.getMessage().getChatId(),
-                        update.getMessage().getText());
-                message.setText(responseToUser.getMessageToUser());
-                setButtons(message, responseToUser.getButtonsMenuStatus());
-                execute(message); // Call method to send the message
+                botLogic.respondUser(update.getMessage().getChatId(), update.getMessage().getText());
             } catch (Exception e) {
-                message.setChatId(System.getenv("MY_CHAT_ID_TELEGRAM"));
+                SendMessage message = new SendMessage();
+                message.setChatId(adminChatId);
                 message.setText("Ошибка telegram-bot'a:\n" + e);
                 try {
                     execute(message);
@@ -59,7 +57,29 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public synchronized void setButtons(SendMessage sendMessage, List<List<String>> buttonsMenu) {
+    public synchronized void sendMessage(Long chatId, String text, Keyboard keyboard) {
+        SendMessage sendMessage = new SendMessage();
+        try {
+            sendMessage.setChatId(chatId.toString());
+            sendMessage.setText(text);
+            setButtons(sendMessage, keyboard);
+            execute(sendMessage);
+        } catch (Exception e) {
+            sendMessage.setChatId(adminChatId);
+            sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public synchronized void setButtons(SendMessage sendMessage, Keyboard keyboard) {
+        if (Objects.equals(keyboard, null)) {
+            sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
+            return;
+        }
         // Создаем клавиуатуру
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
@@ -67,15 +87,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setResizeKeyboard(true);
         replyKeyboardMarkup.setOneTimeKeyboard(false);
 
-        // Создаем список строк клавиатуры
-        List<KeyboardRow> keyboard = new ArrayList<>();
 
-        for (List<String> row : buttonsMenu) {
+        // Создаем список строк клавиатуры
+        List<KeyboardRow> keyboardTelegram = new ArrayList<>();
+
+        for (List<String> row : keyboard.buttons) {
             KeyboardRow keyboardRow = new KeyboardRow();
             for (String button : row)
                 keyboardRow.add(new KeyboardButton(button));
-            keyboard.add(keyboardRow);
+            keyboardTelegram.add(keyboardRow);
         }
-        replyKeyboardMarkup.setKeyboard(keyboard);
+        replyKeyboardMarkup.setKeyboard(keyboardTelegram);
     }
 }
+

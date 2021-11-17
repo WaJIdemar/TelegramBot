@@ -11,10 +11,13 @@ public class Main {
         try {
             String botName = System.getenv("TELEGRAM_BOT_NAME");
             String botToken = System.getenv("TELEGRAM_BOT_TOKEN");
-            BotLogic botLogic = new BotLogic();
-
+            String adminChatId = System.getenv("MY_CHAT_ID_TELEGRAM");
+            TelegramBot telegramBot = new TelegramBot(botName, botToken, adminChatId);
+            TelegramChatClient telegramChatClient = new TelegramChatClient(telegramBot);
+            BotLogic botLogic = new BotLogic(telegramChatClient);
+            telegramBot.setBotLogic(botLogic);
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(new TelegramBot(botName, botToken, botLogic));
+            botsApi.registerBot(telegramBot);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }

@@ -1,11 +1,11 @@
 package org.example.tgbot;
 
 public class User {
-    private final long id;
+    private final Long  id;
     private DialogState dialogState;
     private String userTerm;
 
-    public User(long userId) {
+    public User(Long userId) {
         id = userId;
         dialogState = DialogState.DEFAULT;
     }
@@ -18,7 +18,7 @@ public class User {
         return dialogState;
     }
 
-    public long getUserId() {
+    public Long getUserId() {
         return id;
     }
 
