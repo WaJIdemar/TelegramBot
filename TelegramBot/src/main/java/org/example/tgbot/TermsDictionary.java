@@ -3,8 +3,8 @@ package org.example.tgbot;
 import java.util.*;
 
 public class TermsDictionary {
-    private final Map<String, DictionItem> termsDictionary = new HashMap<>();
-    private final List<DictionItem> terms = new ArrayList<>();
+    private final Map<String, TermDefinition> termsDictionary = new HashMap<>();
+    private final List<TermDefinition> terms = new ArrayList<>();
     private final Random random = new Random();
     private final LevenshteinCalculator levenshteinCalculator = new LevenshteinCalculator();
 
@@ -36,11 +36,11 @@ public class TermsDictionary {
     }
 
     private void addNewTerm(String term, String definition) {
-        terms.add(new DictionItem(term, definition));
-        termsDictionary.put(term, new DictionItem(term, definition));
+        terms.add(new TermDefinition(term, definition));
+        termsDictionary.put(term, new TermDefinition(term, definition));
     }
 
-    public DictionItem getCertainDefinition(String term) {
+    public TermDefinition getCertainDefinition(String term) {
         return termsDictionary.get(term);
     }
 
@@ -48,23 +48,18 @@ public class TermsDictionary {
         return termsDictionary.containsKey(term);
     }
 
-    public String searchSimilarTermOnDictionary(String word) {
-        var minWords = new  ArrayList<String>();
-        for (Map.Entry<String, DictionItem> pair : termsDictionary.entrySet()) {
+    public ArrayList<String> searchSimilarTermOnDictionary(String word) {
+        var minWords = new ArrayList<String>();
+        for (Map.Entry<String, TermDefinition> pair : termsDictionary.entrySet()) {
             var levenshtein = levenshteinCalculator.levenshteinDistance(pair.getKey(), word);
             if (levenshtein < 3) {
                 minWords.add(pair.getKey());
             }
         }
-        if (Objects.equals(minWords, new ArrayList<String>())) {
-            return "";
-        } else {
-            String minWordsString = minWords.toString();
-            return minWordsString.substring(1, minWordsString.length() - 1);
-        }
+        return minWords;
     }
 
-    public DictionItem getRandomTerm() {
+    public TermDefinition getRandomTerm() {
         return terms.get(random.nextInt(terms.size()));
     }
 }

@@ -1,21 +1,25 @@
 package org.example.tgbot;
 
 public class StandardResponsesToUser {
-    public String startMessage = "Привет я чат-бот, чтобы узнать о моих возможностьях напиши \"Помощь\"";
+    public String startMessage = "Привет, я чат-бот! Чтобы узнать что я умею, напишите \"Помощь\"";
     public String helpMessage = """
-            Я могу:
-            Выдать вам рандомный или конкретный ролевой термин по запросу "Дай определение"
-            Ну и здороваться могу, да. Просто напиши "Привет\"""";
-    public String gettingMessage = "Привет";
-    public String outTerm = "Рандомное или конкретное?";
-    public String waitTerm = "Напиште термин";
+            Я умею:
+            -Дать вам определение для рандомного или конкретного ролевого термина. Для этого напишите "Дай определение"
+            -Ну и здороваться могу, да. Просто напишите "Привет\"""";
+    public String gettingMessage = "Привет!";
+    public String outTerm = "Рандомное или конкретное определение?";
+    public String waitTerm = "Определение какого термина хотите узнать?";
     public String userAgree = """
-            Выозможно вы имели ввиду что-то из этого: %s
-            Если да, то напишите это слово, если нет - нажмите "/Отмена\"""";
-    public String termNotFound = "У нас нет похожих слов в словаре. Желаете написать определение %s?";
-    public String writeDefinition = "Желаете написать определение %s?";
+            Возможно вы имели ввиду что-то из этого: %s ?
+            Выберите и напишите слово из списка, если подходящих среди них не оказалось - нажмите "Отменить\"""";
+    public String invalidInputWaitWord = "Напишите одно из предложеных слов, либо нажмите кнопку \"Отменить\"";
+    public String invalidInputYesOrNo = "Напишите \"Да\" или \"Нет\" или воспользуйтесь кнопками";
+    public String termNotFound = "У меня нет похожих слов в словаре( Но я ещё учусь! Хотите добавить в мой словарь определение для термина %s?";
+    public String writeDefinition = "Хотите добавить в мой словарь новое определение %s?";
     public String cancel = "Ок(";
-    public String waitDefinition = "Введите определение %s";
-    public String definitionSentForConsideration = "Ваше определение отправлено на рассмотрение";
-    public String unknownCommand = "Извини, я тебя не понимаю(((";
+    public String waitDefinition = "Опишите мне, что такое %s?";
+    public String invalidInputRandomOrCertain = "Напишите \"Конкретный термин\" или \"Рандомный термин\", или \"Назад\", " +
+            "или воспользуйтесь кнопками.";
+    public String definitionSentForConsideration = "Спасибо! Ваше определение отправлено на рассмотрение моими разработчиками";
+    public String unknownCommand = "Извините, я вас не понимаю(";
 }

@@ -7,6 +7,8 @@ public enum Requests {
     RANDOM_TERM,
     CERTAIN_TERM,
     CANCEL,
-    CONFIRMATION,
+    YES,
+    NO,
+    BACK,
     UNKNOWN_COMMAND,
 }

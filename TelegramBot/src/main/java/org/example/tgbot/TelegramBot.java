@@ -18,11 +18,13 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String Token;
     private BotLogic botLogic;
     private final String adminChatId;
+    public final String moderatorGroupId;
 
-    public TelegramBot(String name, String token, String adminChatId) {
+    public TelegramBot(String name, String token, String adminChatId, String moderatorGroupId) {
         Name = name;
         Token = token;
         this.adminChatId = adminChatId;
+        this.moderatorGroupId = moderatorGroupId;
     }
 
     public void setBotLogic(BotLogic botLogic) {
@@ -62,7 +64,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             sendMessage.setChatId(chatId.toString());
             sendMessage.setText(text);
-            setButtons(sendMessage, keyboard);
+            setReplayKeyboard(sendMessage, keyboard);
             execute(sendMessage);
         } catch (Exception e) {
             sendMessage.setChatId(adminChatId);
@@ -75,7 +77,25 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public synchronized void setButtons(SendMessage sendMessage, Keyboard keyboard) {
+    public synchronized void sendMessageModeratorGroup(TermDefinition termDefinition){
+        SendMessage sendMessage = new SendMessage();
+        try {
+            sendMessage.setChatId(moderatorGroupId);
+            sendMessage.setText(termDefinition.term + " - " + termDefinition.definition);
+            execute(sendMessage);
+        }
+        catch (Exception e){
+            sendMessage.setChatId(adminChatId);
+            sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private synchronized void setReplayKeyboard(SendMessage sendMessage, Keyboard keyboard) {
         if (Objects.equals(keyboard, null)) {
             sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
             return;
@@ -98,6 +118,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             keyboardTelegram.add(keyboardRow);
         }
         replyKeyboardMarkup.setKeyboard(keyboardTelegram);
+    }
+
+    private synchronized void setInlineKeyboard(SendMessage sendMessage, Keyboard keyboard){
+
     }
 }
 

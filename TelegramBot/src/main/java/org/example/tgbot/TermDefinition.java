@@ -1,10 +1,10 @@
 package org.example.tgbot;
 
-public class DictionItem {
+public class TermDefinition {
     public String term;
     public String definition;
 
-    public DictionItem(String term, String definition) {
+    public TermDefinition(String term, String definition) {
         this.term = term;
         this.definition = definition;
     }

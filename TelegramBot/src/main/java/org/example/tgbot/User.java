@@ -1,8 +1,11 @@
 package org.example.tgbot;
 
+import java.util.ArrayList;
+
 public class User {
-    private final Long  id;
+    private final Long id;
     private DialogState dialogState;
+    private ArrayList<String> similarWordsTermsDictionary;
     private String userTerm;
 
     public User(Long userId) {
@@ -22,12 +25,20 @@ public class User {
         return id;
     }
 
-    public void changeUserTerm(String term) {
-        userTerm = term;
+    public void changeUserSimilarWordsTermsDictionary(ArrayList<String> terms) {
+        similarWordsTermsDictionary = terms;
+    }
+
+    public ArrayList<String> getUserSimilarWordsTermsDictionary() {
+        return similarWordsTermsDictionary;
     }
 
     public String getUserTerm() {
         return userTerm;
+    }
+
+    public void changeUserTerm(String userTerm){
+        this.userTerm = userTerm;
     }
 }
 
