@@ -5,5 +5,5 @@ public interface ChatClient {
     
     void sendMessage(Long chatId, String text, Keyboard keyboard);
 
-    void sendMessageModeratorGroup(TermDefinition termDefinition);
+    void sendMessageModeratorGroup(TermDefinition termDefinition, InlineKeyboard keyboard);
 }

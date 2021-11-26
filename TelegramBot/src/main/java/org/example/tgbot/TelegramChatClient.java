@@ -19,7 +19,7 @@ public class TelegramChatClient implements ChatClient {
     }
 
     @Override
-    public void sendMessageModeratorGroup(TermDefinition termDefinition) {
-        telegramBot.sendMessageModeratorGroup(termDefinition);
+    public void sendMessageModeratorGroup(TermDefinition termDefinition, InlineKeyboard keyboard) {
+        telegramBot.sendMessageModeratorGroup(termDefinition, keyboard);
     }
 }

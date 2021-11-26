@@ -40,6 +40,10 @@ public class TermsDictionary {
         termsDictionary.put(term, new TermDefinition(term, definition));
     }
 
+    public void addNewTerm(TermDefinition termDefinition){
+        terms.add(termDefinition);
+        termsDictionary.put(termDefinition.term, termDefinition);
+    }
     public TermDefinition getCertainDefinition(String term) {
         return termsDictionary.get(term);
     }
@@ -48,7 +52,7 @@ public class TermsDictionary {
         return termsDictionary.containsKey(term);
     }
 
-    public ArrayList<String> searchSimilarTermOnDictionary(String word) {
+    public ArrayList<String> searchSimilarTermsOnDictionary(String word) {
         var minWords = new ArrayList<String>();
         for (Map.Entry<String, TermDefinition> pair : termsDictionary.entrySet()) {
             var levenshtein = levenshteinCalculator.levenshteinDistance(pair.getKey(), word);

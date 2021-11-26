@@ -7,10 +7,12 @@ public class User {
     private DialogState dialogState;
     private ArrayList<String> similarWordsTermsDictionary;
     private String userTerm;
+    public Boolean banned;
 
     public User(Long userId) {
         id = userId;
         dialogState = DialogState.DEFAULT;
+        banned = false;
     }
 
     public void changeDialogState(DialogState newDialogState) {

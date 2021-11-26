@@ -1,10 +1,15 @@
 package org.example.tgbot;
 
+import javafx.util.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -57,6 +62,25 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
+        else if (update.hasCallbackQuery()) {
+            try {
+                EditMessageText et = new EditMessageText();
+                et.setChatId(String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
+                et.setMessageId(update.getCallbackQuery().getMessage().getMessageId());
+                et.setText(update.getCallbackQuery().getMessage().getText());
+                botLogic.processingCallBack(update.getCallbackQuery().getData(), update.getCallbackQuery().getMessage().getText());
+                execute(et);
+            } catch (Exception e) {
+                SendMessage message = new SendMessage();
+                message.setChatId(adminChatId);
+                message.setText("Ошибка telegram-bot'a:\n" + e);
+                try {
+                    execute(message);
+                } catch (TelegramApiException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
     }
 
     public synchronized void sendMessage(Long chatId, String text, Keyboard keyboard) {
@@ -77,14 +101,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public synchronized void sendMessageModeratorGroup(TermDefinition termDefinition){
+    public synchronized void sendMessageModeratorGroup(TermDefinition termDefinition, InlineKeyboard keyboard) {
         SendMessage sendMessage = new SendMessage();
         try {
             sendMessage.setChatId(moderatorGroupId);
             sendMessage.setText(termDefinition.term + " - " + termDefinition.definition);
+            setInlineKeyboard(sendMessage, keyboard);
             execute(sendMessage);
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             sendMessage.setChatId(adminChatId);
             sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
             try {
@@ -120,8 +144,22 @@ public class TelegramBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setKeyboard(keyboardTelegram);
     }
 
-    private synchronized void setInlineKeyboard(SendMessage sendMessage, Keyboard keyboard){
+    private synchronized void setInlineKeyboard(SendMessage sendMessage, InlineKeyboard keyboard) {
+        List<List<InlineKeyboardButton>> keyboardTelegram = new ArrayList<>();
 
+        for (List<Pair<String, String>> row : keyboard.buttons) {
+            List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
+            for (Pair<String, String> button : row) {
+                InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
+                inlineKeyboardButton.setText(button.getKey());
+                inlineKeyboardButton.setCallbackData(button.getValue());
+                keyboardRow.add(inlineKeyboardButton);
+            }
+            keyboardTelegram.add(keyboardRow);
+        }
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+        inlineKeyboardMarkup.setKeyboard(keyboardTelegram);
     }
 }
 

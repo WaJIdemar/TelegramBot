@@ -1,6 +1,8 @@
 package org.example.tgbot;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BotLogic {
     private final Map<Long, User> users = new HashMap<>();
@@ -8,13 +10,14 @@ public class BotLogic {
     private final StandardResponsesToUser standardResponsesToUser = new StandardResponsesToUser();
     private final StandardUserRequest standardUserRequest = new StandardUserRequest();
     private final ChatClient chatClient;
+    private final CallbackData callbackData = new CallbackData();
 
     public BotLogic(ChatClient chatClient) {
         this.chatClient = chatClient;
     }
 
     public void respondUser(Long id, String message) {
-        if(Objects.equals(id, chatClient.getModeratorGroupId()))
+        if (Objects.equals(id, chatClient.getModeratorGroupId()))
             return;
         message = message.toLowerCase(Locale.ROOT);
         if (!users.containsKey(id)) {
@@ -30,11 +33,10 @@ public class BotLogic {
             case WAIT_CONFIRMATION_DEFINITION_INPUT -> aggregateWaitConfirmationDefinitionInput(id, request);// Ждём подтверждения, что пользователь хочет написать определение
             case WAIT_RANDOM_OR_CERTAIN_TERM -> aggregateWaitRandomOrCertainTerm(id, request); // Ждём какое определение хочет пользователь конкретно или конкретное
             case DEFAULT -> aggregateDefaultState(id, request); // Стандартное состояние
-
         }
     }
 
-    private void aggregateWaitTermUser(long id, String message, Requests request) {
+    private void aggregateWaitTermUser(Long id, String message, Requests request) {
         if (request == Requests.CANCEL) {
             users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             chatClient.sendMessage(id, standardResponsesToUser.cancel, new RandomOrCertainTermKeyboard());
@@ -45,18 +47,26 @@ public class BotLogic {
                 String text = termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
                         + " - " + termDefinition.definition;
                 chatClient.sendMessage(id, text, new RandomOrCertainTermKeyboard());
+                chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
                 users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             } else {
                 users.get(id).changeUserTerm(message);
-                ArrayList<String> similarTerm = termsDictionary.searchSimilarTermOnDictionary(message);
-                users.get(id).changeUserSimilarWordsTermsDictionary(similarTerm);
+                ArrayList<String> similarTerms = termsDictionary.searchSimilarTermsOnDictionary(message);
+                users.get(id).changeUserSimilarWordsTermsDictionary(similarTerms);
 
-                if (Objects.equals(similarTerm, new ArrayList<String>())) {
-                    chatClient.sendMessage(id, standardResponsesToUser.termNotFound.formatted(message), new YesOrNoKeyboard());
-                    users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
+                if (Objects.equals(similarTerms, new ArrayList<String>())) {
+                    if (!users.get(id).banned) {
+                        chatClient.sendMessage(id, standardResponsesToUser.termNotFound.formatted(message), new YesOrNoKeyboard());
+                        users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
+                    }
+                    else {
+                        users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+                        chatClient.sendMessage(id, standardResponsesToUser.notFondTermsAndUserBanned, new RandomOrCertainTermKeyboard());
+                        chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
+                    }
                 } else {
-                    users.get(id).changeUserSimilarWordsTermsDictionary(similarTerm);
-                    chatClient.sendMessage(id, standardResponsesToUser.userAgree.formatted(String.join(", ", similarTerm)),
+                    users.get(id).changeUserSimilarWordsTermsDictionary(similarTerms);
+                    chatClient.sendMessage(id, standardResponsesToUser.userAgree.formatted(String.join(", ", similarTerms)),
                             new CancelKeyboard());
                     users.get(id).changeDialogState(DialogState.WAIT_WORD_INPUT);
                 }
@@ -64,10 +74,17 @@ public class BotLogic {
         }
     }
 
-    private void aggregateWaitWordInput(long id, String message, Requests request) {
+    private void aggregateWaitWordInput(Long id, String message, Requests request) {
         if (request == Requests.CANCEL) {
-            chatClient.sendMessage(id, standardResponsesToUser.writeDefinition.formatted(users.get(id).getUserTerm()), new YesOrNoKeyboard());
-            users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
+            if (!users.get(id).banned) {
+                chatClient.sendMessage(id, standardResponsesToUser.writeDefinition.formatted(users.get(id).getUserTerm()), new YesOrNoKeyboard());
+                users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
+            }
+            else{
+                users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+                chatClient.sendMessage(id, standardResponsesToUser.notFondTermsAndUserBanned, new RandomOrCertainTermKeyboard());
+                chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
+            }
 
         } else if (users.get(id).getUserSimilarWordsTermsDictionary().contains(message)) {
             TermDefinition termDefinition = termsDictionary.getCertainDefinition(message);
@@ -81,19 +98,19 @@ public class BotLogic {
         }
     }
 
-    private void aggregateWaitDefinition(long id, String message, Requests request) {
+    private void aggregateWaitDefinition(Long id, String message, Requests request) {
         if (request == Requests.CANCEL)
             chatClient.sendMessage(id, standardResponsesToUser.cancel, new RandomOrCertainTermKeyboard());
         else {
             chatClient.sendMessage(id, standardResponsesToUser.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
-            chatClient.sendMessageModeratorGroup(new TermDefinition(users.get(id).getUserTerm(), message));
+            chatClient.sendMessageModeratorGroup(new TermDefinition(users.get(id).getUserTerm(), message + "\nID: " + id), new AcceptingKeyboard());
         }
         chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
         users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
     }
 
 
-    private void aggregateWaitConfirmationDefinitionInput(long id, Requests request) {
+    private void aggregateWaitConfirmationDefinitionInput(Long id, Requests request) {
         if (request == Requests.YES) {
             chatClient.sendMessage(id, standardResponsesToUser.waitDefinition.formatted(users.get(id).getUserTerm()), new CancelKeyboard());
             users.get(id).changeDialogState(DialogState.WAIT_DEFINITION);
@@ -106,7 +123,7 @@ public class BotLogic {
         }
     }
 
-    private void aggregateWaitRandomOrCertainTerm(long id, Requests request) {
+    private void aggregateWaitRandomOrCertainTerm(Long id, Requests request) {
         switch (request) {
             case RANDOM_TERM -> {
                 TermDefinition termDefinition = termsDictionary.getRandomTerm();
@@ -131,7 +148,7 @@ public class BotLogic {
         }
     }
 
-    private void aggregateDefaultState(long id, Requests request) {
+    private void aggregateDefaultState(Long id, Requests request) {
         switch (request) {
             case HELP -> chatClient.sendMessage(id, standardResponsesToUser.helpMessage, new DefaultKeyboard());
             case GREETING -> chatClient.sendMessage(id, standardResponsesToUser.gettingMessage, new DefaultKeyboard());
@@ -143,6 +160,26 @@ public class BotLogic {
                 chatClient.sendMessage(id, standardResponsesToUser.unknownCommand, new DefaultKeyboard());
                 users.get(id).changeDialogState(DialogState.DEFAULT);
             }
+        }
+    }
+
+    public void processingCallBack(String data, String text) {
+        if (Objects.equals(data, callbackData.accept)) {
+            String[] strings = text.split("-");
+            Pattern patternToDefinition = Pattern.compile("- [\\d\\D]*?\n");
+            Matcher matcher = patternToDefinition.matcher(text);
+            String term = strings[0];
+            term = text.substring(0, 1).toUpperCase() + term.substring(1);
+            matcher.find();
+            String definition = text.substring(matcher.start() + 2, matcher.end() - 1);
+
+            termsDictionary.addNewTerm(new TermDefinition(term, definition));
+        } else if (Objects.equals(data, callbackData.ban)) {
+            Pattern patternToId = Pattern.compile("ID: ([\\d]+)", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = patternToId.matcher(text);
+            matcher.find();
+            Long id = Long.parseLong(text.substring(matcher.start() + 4, matcher.end()));
+            users.get(id).banned = true;
         }
     }
 
