@@ -165,7 +165,7 @@ public class BotLogic {
 
     public void processingCallBack(String data, String text) {
         if (Objects.equals(data, callbackData.accept)) {
-            String[] strings = text.split("-");
+            String[] strings = text.split(" - ");
             Pattern patternToDefinition = Pattern.compile("- [\\d\\D]*?\n");
             Matcher matcher = patternToDefinition.matcher(text);
             String term = strings[0];
