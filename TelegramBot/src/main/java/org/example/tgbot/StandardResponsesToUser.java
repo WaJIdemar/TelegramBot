@@ -20,7 +20,7 @@ public class StandardResponsesToUser {
     public String waitDefinition = "Опишите мне, что такое %s?";
     public String invalidInputRandomOrCertain = "Напишите \"Конкретный термин\" или \"Рандомный термин\", или \"Назад\", " +
             "или воспользуйтесь кнопками.";
-    public String definitionSentForConsideration = "Спасибо! Ваше определение отправлено на рассмотрение моими разработчиками";
+    public String definitionSentForConsideration = "Спасибо! Ваше определение отправлено на рассмотрение моим разработчиками";
     public String notFondTermsAndUserBanned = "У меня нет похожих слов в словаре( И вы не можете добавить это слово в словарь, так как " +
             "были забанены(";
     public String unknownCommand = "Извините, я вас не понимаю(";

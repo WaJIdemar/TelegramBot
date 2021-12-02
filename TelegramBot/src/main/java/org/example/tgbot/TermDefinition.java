@@ -7,7 +7,7 @@ public class TermDefinition {
     public String definition;
 
     public TermDefinition(String term, String definition) {
-        this.term = term.toLowerCase(Locale.ROOT);
-        this.definition = definition.toLowerCase(Locale.ROOT);
+        this.term = term;
+        this.definition = definition;
     }
 }

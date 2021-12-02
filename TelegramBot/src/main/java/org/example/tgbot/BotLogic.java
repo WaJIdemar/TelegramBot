@@ -169,7 +169,6 @@ public class BotLogic {
             Pattern patternToDefinition = Pattern.compile("- [\\d\\D]*?\n");
             Matcher matcher = patternToDefinition.matcher(text);
             String term = strings[0];
-            term = text.substring(0, 1).toUpperCase() + term.substring(1);
             matcher.find();
             String definition = text.substring(matcher.start() + 2, matcher.end() - 1);
 
