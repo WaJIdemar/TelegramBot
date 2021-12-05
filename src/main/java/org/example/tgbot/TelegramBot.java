@@ -3,7 +3,6 @@ package org.example.tgbot;
 import javafx.util.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -22,14 +21,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final String Name;
     private final String Token;
     private BotLogic botLogic;
-    private final String adminChatId;
-    public final String moderatorGroupId;
+    private final String adminGroupId;
 
-    public TelegramBot(String name, String token, String adminChatId, String moderatorGroupId) {
+    public TelegramBot(String name, String token, String adminGroupId) {
         Name = name;
         Token = token;
-        this.adminChatId = adminChatId;
-        this.moderatorGroupId = moderatorGroupId;
+        this.adminGroupId = adminGroupId;
     }
 
     public void setBotLogic(BotLogic botLogic) {
@@ -53,7 +50,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 botLogic.respondUser(update.getMessage().getChatId(), update.getMessage().getText());
             } catch (Exception e) {
                 SendMessage message = new SendMessage();
-                message.setChatId(adminChatId);
+                message.setChatId(adminGroupId);
                 message.setText("Ошибка telegram-bot'a:\n" + e);
                 try {
                     execute(message);
@@ -72,7 +69,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 execute(et);
             } catch (Exception e) {
                 SendMessage message = new SendMessage();
-                message.setChatId(adminChatId);
+                message.setChatId(adminGroupId);
                 message.setText("Ошибка telegram-bot'a:\n" + e);
                 try {
                     execute(message);
@@ -91,7 +88,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             setReplayKeyboard(sendMessage, keyboard);
             execute(sendMessage);
         } catch (Exception e) {
-            sendMessage.setChatId(adminChatId);
+            sendMessage.setChatId(adminGroupId);
             sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
             try {
                 execute(sendMessage);
@@ -101,15 +98,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public synchronized void sendMessageModeratorGroup(TermDefinition termDefinition, InlineKeyboard keyboard) {
+    public synchronized void sendMessage(Long chatId, String text, InlineKeyboard keyboard) {
         SendMessage sendMessage = new SendMessage();
         try {
-            sendMessage.setChatId(moderatorGroupId);
-            sendMessage.setText(termDefinition.term + " - " + termDefinition.definition);
+            sendMessage.setChatId(chatId.toString());
+            sendMessage.setText(text);
             setInlineKeyboard(sendMessage, keyboard);
             execute(sendMessage);
         } catch (Exception e) {
-            sendMessage.setChatId(adminChatId);
+            sendMessage.setChatId(adminGroupId);
             sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
             try {
                 execute(sendMessage);

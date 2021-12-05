@@ -9,17 +9,13 @@ public class TelegramChatClient implements ChatClient {
     }
 
     @Override
-    public Long getModeratorGroupId() {
-        return Long.parseLong(telegramBot.moderatorGroupId);
-    }
-
-    @Override
     public void sendMessage(Long chatId, String text, Keyboard keyboard) {
         telegramBot.sendMessage(chatId, text, keyboard);
     }
 
     @Override
-    public void sendMessageModeratorGroup(TermDefinition termDefinition, InlineKeyboard keyboard) {
-        telegramBot.sendMessageModeratorGroup(termDefinition, keyboard);
+    public void sendMessage(Long chatId, String text, InlineKeyboard keyboard) {
+        telegramBot.sendMessage(chatId, text, keyboard);
     }
+
 }

@@ -11,17 +11,24 @@ public class BotLogic {
     private final StandardUserRequest standardUserRequest = new StandardUserRequest();
     private final ChatClient chatClient;
     private final CallbackData callbackData = new CallbackData();
+    private final Long moderatorGroupId;
+    private final Long adminGroupId;
 
-    public BotLogic(ChatClient chatClient) {
+    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId) {
         this.chatClient = chatClient;
+        this.moderatorGroupId = moderatorGroupId;
+        this.adminGroupId = adminGroupId;
     }
 
     public void respondUser(Long id, String message) {
-        if (Objects.equals(id, chatClient.getModeratorGroupId()))
+        if (Objects.equals(id, moderatorGroupId) || Objects.equals(id, adminGroupId))
             return;
         message = message.toLowerCase(Locale.ROOT);
-        if (!users.containsKey(id)) {
-            users.put(id, new User(id));
+        if (Objects.equals(message, standardUserRequest.start)) {
+            if (users.containsKey(id))
+                users.replace(id, new User(id));
+            else
+                users.put(id, new User(id));
             chatClient.sendMessage(id, standardResponsesToUser.startMessage, new DefaultKeyboard());
             return;
         }
@@ -103,7 +110,7 @@ public class BotLogic {
             chatClient.sendMessage(id, standardResponsesToUser.cancel, new RandomOrCertainTermKeyboard());
         else {
             chatClient.sendMessage(id, standardResponsesToUser.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
-            chatClient.sendMessageModeratorGroup(new TermDefinition(users.get(id).getUserTerm(), message + "\nID: " + id), new AcceptingKeyboard());
+            chatClient.sendMessage(moderatorGroupId, users.get(id).getUserTerm() + message + "\nID: " + id, new AcceptingKeyboard());
         }
         chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
         users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);

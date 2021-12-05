@@ -12,11 +12,11 @@ public class Main {
         try {
             String botName = System.getenv("TELEGRAM_BOT_NAME");
             String botToken = System.getenv("TELEGRAM_BOT_TOKEN");
-            String adminChatId = System.getenv("MY_CHAT_ID_TELEGRAM");
-            String telegramGroupChatId = System.getenv("TELEGRAM_MODERATOR_GROUP_ID");
-            TelegramBot telegramBot = new TelegramBot(botName, botToken, adminChatId, telegramGroupChatId);
+            String adminGroupId = System.getenv("MODERATOR_GROUP_ID_TELEGRAM");
+            Long moderatorGroupId = Long.parseLong(System.getenv("TELEGRAM_MODERATOR_GROUP_ID"));
+            TelegramBot telegramBot = new TelegramBot(botName, botToken, adminGroupId);
             TelegramChatClient telegramChatClient = new TelegramChatClient(telegramBot);
-            BotLogic botLogic = new BotLogic(telegramChatClient);
+            BotLogic botLogic = new BotLogic(telegramChatClient, moderatorGroupId, Long.parseLong(adminGroupId));
             telegramBot.setBotLogic(botLogic);
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(telegramBot);
