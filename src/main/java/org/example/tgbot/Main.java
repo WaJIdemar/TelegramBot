@@ -12,7 +12,7 @@ public class Main {
         try {
             String botName = System.getenv("TELEGRAM_BOT_NAME");
             String botToken = System.getenv("TELEGRAM_BOT_TOKEN");
-            String adminGroupId = System.getenv("MODERATOR_GROUP_ID_TELEGRAM");
+            String adminGroupId = System.getenv("TELEGRAM_ADMIN_GROUP_ID");
             Long moderatorGroupId = Long.parseLong(System.getenv("TELEGRAM_MODERATOR_GROUP_ID"));
             TelegramBot telegramBot = new TelegramBot(botName, botToken, adminGroupId);
             TelegramChatClient telegramChatClient = new TelegramChatClient(telegramBot);
