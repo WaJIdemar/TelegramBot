@@ -1,6 +1,6 @@
 package org.example.tgbot;
 
-public enum Requests {
+public enum RequestFromUser {
     HELP,
     GREETING,
     OUT_TERM,

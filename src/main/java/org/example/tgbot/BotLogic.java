@@ -32,19 +32,19 @@ public class BotLogic {
             chatClient.sendMessage(id, standardResponsesToUser.startMessage, new DefaultKeyboard());
             return;
         }
-        var request = parsUserMessage(message);
+        var request = parseUserMessage(message);
         switch (users.get(id).getDialogState()) {
-            case WAIT_TERM -> aggregateWaitTermUser(id, message, request); // Ждём пока пользователь введёт конкретный термин
-            case WAIT_WORD_INPUT -> aggregateWaitWordInput(id, message, request); // Ждём пока пользователь введёт слово, чтобы выдать определение или попросить написать определение
-            case WAIT_DEFINITION -> aggregateWaitDefinition(id, message, request); // Ждём опеределение от пользователя
-            case WAIT_CONFIRMATION_DEFINITION_INPUT -> aggregateWaitConfirmationDefinitionInput(id, request);// Ждём подтверждения, что пользователь хочет написать определение
-            case WAIT_RANDOM_OR_CERTAIN_TERM -> aggregateWaitRandomOrCertainTerm(id, request); // Ждём какое определение хочет пользователь конкретно или конкретное
-            case DEFAULT -> aggregateDefaultState(id, request); // Стандартное состояние
+            case WAIT_TERM -> acceptTermUser(id, message, request); // Ждём пока пользователь введёт конкретный термин
+            case WAIT_WORD_INPUT -> acceptWordInput(id, message, request); // Ждём пока пользователь введёт слово, чтобы выдать определение или попросить написать определение
+            case WAIT_DEFINITION -> acceptDefinition(id, message, request); // Ждём опеределение от пользователя
+            case WAIT_CONFIRMATION_DEFINITION_INPUT -> acceptConfirmationDefinitionInput(id, request);// Ждём подтверждения, что пользователь хочет написать определение
+            case WAIT_RANDOM_OR_CERTAIN_TERM -> acceptRandomOrCertainTerm(id, request); // Ждём какое определение хочет пользователь конкретно или конкретное
+            case DEFAULT -> acceptDefaultState(id, request); // Стандартное состояние
         }
     }
 
-    private void aggregateWaitTermUser(Long id, String message, Requests request) {
-        if (request == Requests.CANCEL) {
+    private void acceptTermUser(Long id, String message, RequestFromUser requestFromUser) {
+        if (requestFromUser == RequestFromUser.CANCEL) {
             users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             chatClient.sendMessage(id, standardResponsesToUser.cancel, new RandomOrCertainTermKeyboard());
             chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
@@ -81,8 +81,8 @@ public class BotLogic {
         }
     }
 
-    private void aggregateWaitWordInput(Long id, String message, Requests request) {
-        if (request == Requests.CANCEL) {
+    private void acceptWordInput(Long id, String message, RequestFromUser requestFromUser) {
+        if (requestFromUser == RequestFromUser.CANCEL) {
             if (!users.get(id).banned) {
                 chatClient.sendMessage(id, standardResponsesToUser.writeDefinition.formatted(users.get(id).getUserTerm()), new YesOrNoKeyboard());
                 users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
@@ -105,8 +105,8 @@ public class BotLogic {
         }
     }
 
-    private void aggregateWaitDefinition(Long id, String message, Requests request) {
-        if (request == Requests.CANCEL)
+    private void acceptDefinition(Long id, String message, RequestFromUser requestFromUser) {
+        if (requestFromUser == RequestFromUser.CANCEL)
             chatClient.sendMessage(id, standardResponsesToUser.cancel, new RandomOrCertainTermKeyboard());
         else {
             chatClient.sendMessage(id, standardResponsesToUser.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
@@ -117,11 +117,11 @@ public class BotLogic {
     }
 
 
-    private void aggregateWaitConfirmationDefinitionInput(Long id, Requests request) {
-        if (request == Requests.YES) {
+    private void acceptConfirmationDefinitionInput(Long id, RequestFromUser requestFromUser) {
+        if (requestFromUser == RequestFromUser.YES) {
             chatClient.sendMessage(id, standardResponsesToUser.waitDefinition.formatted(users.get(id).getUserTerm()), new CancelKeyboard());
             users.get(id).changeDialogState(DialogState.WAIT_DEFINITION);
-        } else if (request == Requests.NO) {
+        } else if (requestFromUser == RequestFromUser.NO) {
             chatClient.sendMessage(id, standardResponsesToUser.cancel, new RandomOrCertainTermKeyboard());
             chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
             users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
@@ -130,8 +130,8 @@ public class BotLogic {
         }
     }
 
-    private void aggregateWaitRandomOrCertainTerm(Long id, Requests request) {
-        switch (request) {
+    private void acceptRandomOrCertainTerm(Long id, RequestFromUser requestFromUser) {
+        switch (requestFromUser) {
             case RANDOM_TERM -> {
                 TermDefinition termDefinition = termsDictionary.getRandomTerm();
                 String text = termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
@@ -155,8 +155,8 @@ public class BotLogic {
         }
     }
 
-    private void aggregateDefaultState(Long id, Requests request) {
-        switch (request) {
+    private void acceptDefaultState(Long id, RequestFromUser requestFromUser) {
+        switch (requestFromUser) {
             case HELP -> chatClient.sendMessage(id, standardResponsesToUser.helpMessage, new DefaultKeyboard());
             case GREETING -> chatClient.sendMessage(id, standardResponsesToUser.gettingMessage, new DefaultKeyboard());
             case OUT_TERM -> {
@@ -189,27 +189,27 @@ public class BotLogic {
         }
     }
 
-    private Requests parsUserMessage(String message) {
+    private RequestFromUser parseUserMessage(String message) {
         if (Objects.equals(message, standardUserRequest.help))
-            return Requests.HELP;
+            return RequestFromUser.HELP;
         if (Objects.equals(message, standardUserRequest.getting))
-            return Requests.GREETING;
+            return RequestFromUser.GREETING;
         if (Objects.equals(message, standardUserRequest.outTerm))
-            return Requests.OUT_TERM;
+            return RequestFromUser.OUT_TERM;
         if (Objects.equals(message, standardUserRequest.outRandomTerm)
                 || Objects.equals(message, standardUserRequest.outRandomTerm2))
-            return Requests.RANDOM_TERM;
+            return RequestFromUser.RANDOM_TERM;
         if (Objects.equals(message, standardUserRequest.outCertainTerm)
                 || Objects.equals(message, standardUserRequest.outCertainTerm2))
-            return Requests.CERTAIN_TERM;
+            return RequestFromUser.CERTAIN_TERM;
         if (Objects.equals(message, standardUserRequest.cancel))
-            return Requests.CANCEL;
+            return RequestFromUser.CANCEL;
         if (Objects.equals(message, standardUserRequest.yes))
-            return Requests.YES;
+            return RequestFromUser.YES;
         if (Objects.equals(message, standardUserRequest.no))
-            return Requests.NO;
+            return RequestFromUser.NO;
         if (Objects.equals(message, standardUserRequest.back))
-            return Requests.BACK;
-        return Requests.UNKNOWN_COMMAND;
+            return RequestFromUser.BACK;
+        return RequestFromUser.UNKNOWN_COMMAND;
     }
 }
