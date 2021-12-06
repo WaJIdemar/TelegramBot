@@ -65,7 +65,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 et.setChatId(String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
                 et.setMessageId(update.getCallbackQuery().getMessage().getMessageId());
                 et.setText(update.getCallbackQuery().getMessage().getText());
-                botLogic.processingCallBack(update.getCallbackQuery().getData(), update.getCallbackQuery().getMessage().getText());
+                botLogic.processingCallBack(update.getCallbackQuery().getData());
                 execute(et);
             } catch (Exception e) {
                 SendMessage message = new SendMessage();

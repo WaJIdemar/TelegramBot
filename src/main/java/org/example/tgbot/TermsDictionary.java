@@ -7,6 +7,9 @@ public class TermsDictionary {
     private final List<TermDefinition> terms = new ArrayList<>();
     private final Random random = new Random();
     private final LevenshteinCalculator levenshteinCalculator = new LevenshteinCalculator();
+    private Integer countTermsForConsideration = 0;
+    private final Map<Integer, TermDefinition> termsForConsideration = new HashMap<>();
+
 
     public TermsDictionary() {
         addWordsInDictionary();
@@ -40,10 +43,26 @@ public class TermsDictionary {
         termsDictionary.put(term, new TermDefinition(term, definition));
     }
 
-    public void addNewTerm(TermDefinition termDefinition){
+    public void addNewTerm(TermDefinition termDefinition) {
         terms.add(termDefinition);
         termsDictionary.put(termDefinition.term, termDefinition);
     }
+
+    public Integer addTermForConsideration(String term, String definition) {
+        Integer index = countTermsForConsideration;
+        termsForConsideration.put(index, new TermDefinition(term, definition));
+        countTermsForConsideration++;
+        return index;
+    }
+
+    public void addTermFromConsideration(Integer index){
+        addNewTerm(termsForConsideration.get(index));
+    }
+
+    public void deleteTermFormConsideration(Integer index){
+        termsForConsideration.remove(index);
+    }
+
     public TermDefinition getCertainDefinition(String term) {
         return termsDictionary.get(term);
     }
