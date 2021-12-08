@@ -58,15 +58,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                     ex.printStackTrace();
                 }
             }
-        }
-        else if (update.hasCallbackQuery()) {
+        } else if (update.hasCallbackQuery()) {
             try {
-                EditMessageText et = new EditMessageText();
-                et.setChatId(String.valueOf(update.getCallbackQuery().getMessage().getChatId()));
-                et.setMessageId(update.getCallbackQuery().getMessage().getMessageId());
-                et.setText(update.getCallbackQuery().getMessage().getText());
-                botLogic.processingCallBack(update.getCallbackQuery().getData());
-                execute(et);
+                botLogic.processingCallBack(update.getCallbackQuery().getMessage().getChatId(),
+                        update.getCallbackQuery().getMessage().getMessageId(),
+                        update.getCallbackQuery().getMessage().getText(), update.getCallbackQuery().getData());
             } catch (Exception e) {
                 SendMessage message = new SendMessage();
                 message.setChatId(adminGroupId);
@@ -141,7 +137,28 @@ public class TelegramBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setKeyboard(keyboardTelegram);
     }
 
+    public void editMessage(Long chatId, Integer messageId, String text) {
+        EditMessageText editMessageText = new EditMessageText();
+        try {
+            editMessageText.setChatId(chatId.toString());
+            editMessageText.setMessageId(messageId);
+            editMessageText.setText(text);
+            execute(editMessageText);
+        } catch (Exception e) {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(adminGroupId);
+            sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
     private synchronized void setInlineKeyboard(SendMessage sendMessage, InlineKeyboard keyboard) {
+        if (Objects.equals(keyboard, null))
+            return;
         List<List<InlineKeyboardButton>> keyboardTelegram = new ArrayList<>();
 
         for (List<Pair<String, String>> row : keyboard.buttons) {

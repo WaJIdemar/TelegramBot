@@ -24,4 +24,11 @@ public class StandardResponsesToUser {
     public String notFondTermsAndUserBanned = "У меня нет похожих слов в словаре( И вы не можете добавить это слово в словарь, так как " +
             "были забанены(";
     public String unknownCommand = "Извините, я вас не понимаю(";
+    public String messageForModerator = """
+            Одобрите пожалуйста, если достойно
+            ня (^_^)6
+            ______
+            %s - %s
+            #%d
+            """;
 }

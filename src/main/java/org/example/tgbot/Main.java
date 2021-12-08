@@ -16,7 +16,9 @@ public class Main {
             Long moderatorGroupId = Long.parseLong(System.getenv("TELEGRAM_MODERATOR_GROUP_ID"));
             TelegramBot telegramBot = new TelegramBot(botName, botToken, adminGroupId);
             TelegramChatClient telegramChatClient = new TelegramChatClient(telegramBot);
-            BotLogic botLogic = new BotLogic(telegramChatClient, moderatorGroupId, Long.parseLong(adminGroupId));
+            BotLogic botLogic = new BotLogic(telegramChatClient, moderatorGroupId, Long.parseLong(adminGroupId), new TermsDictionary(),
+                    new ModeratingTermsDictionary(), new StandardResponsesToUser(), new StandardUserRequest(), new CallbackButton(),
+                    new DecisionOnTerm());
             telegramBot.setBotLogic(botLogic);
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(telegramBot);

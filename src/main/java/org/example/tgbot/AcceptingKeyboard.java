@@ -7,8 +7,8 @@ import java.util.List;
 
 public class AcceptingKeyboard extends InlineKeyboard {
     public AcceptingKeyboard(Integer index, Long id) {
-        super(List.of(List.of(new Pair<>("Принять", "принять_" + index),
-                new Pair<>("Отклонить", "отклонить_" + index),
-                new Pair<>("Бан", "бан_" + id))));
+        super(List.of(List.of(new Pair<>("Принять", "accept_" + index),
+                new Pair<>("Отклонить", "reject_" + index),
+                new Pair<>("Бан", "ban_" + id))));
     }
 }

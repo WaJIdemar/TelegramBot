@@ -8,13 +8,13 @@ public class ModeratingTermsDictionary {
     private Integer currentIndex = 0;
 
     public Integer addNewTerm(String term, String definition) {
-        moderatingTermsDictionary.put(currentIndex, new TermDefinition(term, definition));
+        Integer index = currentIndex;
+        moderatingTermsDictionary.put(index, new TermDefinition(term, definition));
         currentIndex++;
         if (currentIndex.equals(upBound)) {
             currentIndex = 0;
-            return upBound;
         }
-        return currentIndex - 1;
+        return index;
     }
 
     public TermDefinition getDefinition(Integer index) {

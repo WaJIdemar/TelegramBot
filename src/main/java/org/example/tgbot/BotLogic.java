@@ -1,24 +1,33 @@
 package org.example.tgbot;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 public class BotLogic {
     private final Map<Long, User> users = new HashMap<>();
-    private final TermsDictionary termsDictionary = new TermsDictionary();
-    private final ModeratingTermsDictionary moderatingTermsDictionary = new ModeratingTermsDictionary();
-    private final StandardResponsesToUser standardResponsesToUser = new StandardResponsesToUser();
-    private final StandardUserRequest standardUserRequest = new StandardUserRequest();
+    private final TermsDictionary termsDictionary;
+    private final ModeratingTermsDictionary moderatingTermsDictionary;
+    private final StandardResponsesToUser standardResponsesToUser;
+    private final StandardUserRequest standardUserRequest;
     private final ChatClient chatClient;
-    private final CallbackButton callbackButton = new CallbackButton();
+    private final CallbackButton callbackButton;
+    private final DecisionOnTerm decisionOnTerm;
     private final Long moderatorGroupId;
     private final Long adminGroupId;
 
-    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId) {
+    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId, TermsDictionary termsDictionary,
+                    ModeratingTermsDictionary moderatingTermsDictionary,StandardResponsesToUser standardResponsesToUser,
+                    StandardUserRequest standardUserRequest, CallbackButton callbackButton, DecisionOnTerm decisionOnTerm) {
         this.chatClient = chatClient;
         this.moderatorGroupId = moderatorGroupId;
         this.adminGroupId = adminGroupId;
+        this.termsDictionary = termsDictionary;
+        this.moderatingTermsDictionary = moderatingTermsDictionary;
+        this.standardResponsesToUser = standardResponsesToUser;
+        this.standardUserRequest = standardUserRequest;
+        this.callbackButton = callbackButton;
+        this.decisionOnTerm = decisionOnTerm;
+
     }
 
     public void respondUser(Long id, String message) {
@@ -66,8 +75,7 @@ public class BotLogic {
                     if (!users.get(id).banned) {
                         chatClient.sendMessage(id, standardResponsesToUser.termNotFound.formatted(message), new YesOrNoKeyboard());
                         users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
-                    }
-                    else {
+                    } else {
                         users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
                         chatClient.sendMessage(id, standardResponsesToUser.notFondTermsAndUserBanned, new RandomOrCertainTermKeyboard());
                         chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
@@ -87,8 +95,7 @@ public class BotLogic {
             if (!users.get(id).banned) {
                 chatClient.sendMessage(id, standardResponsesToUser.writeDefinition.formatted(users.get(id).getUserTerm()), new YesOrNoKeyboard());
                 users.get(id).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
-            }
-            else{
+            } else {
                 users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
                 chatClient.sendMessage(id, standardResponsesToUser.notFondTermsAndUserBanned, new RandomOrCertainTermKeyboard());
                 chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
@@ -112,9 +119,9 @@ public class BotLogic {
         else {
             chatClient.sendMessage(id, standardResponsesToUser.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
             Integer index = moderatingTermsDictionary.addNewTerm(users.get(id).getUserTerm(), message);
-            chatClient.sendMessage(moderatorGroupId, "Одобрите пожалуйста, если достойно\n" +
-                    "ня (^_^)6\n______\n" + users.get(id).getUserTerm() + " - " + message + "\n#" + index,
-                    new AcceptingKeyboard(index, id));
+            chatClient.sendMessage(moderatorGroupId,
+                    standardResponsesToUser.messageForModerator.formatted(users.get(id).getUserTerm(), message, index),
+            new AcceptingKeyboard(index, id));
         }
         chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
         users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
@@ -174,14 +181,19 @@ public class BotLogic {
         }
     }
 
-    public void processingCallBack(String data) {
+    public void processingCallBack(Long chatId, Integer messageId, String text, String data) {
         String button = data.split("_")[0];
         if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.accept)) {
-            termsDictionary.addNewTerm(moderatingTermsDictionary.getDefinition(Integer.parseInt(data.split("_")[1])).term,
-                                       moderatingTermsDictionary.getDefinition(Integer.parseInt(data.split("_")[1])).definition);
+            termsDictionary.addNewTerm(moderatingTermsDictionary.getDefinition(Integer.parseInt(data.split("_")[1])));
+            chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.accept);
         } else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.ban)) {
             users.get(Long.parseLong(data.split("_")[1])).banned = true;
+            chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.ban);
         }
+        else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.reject)){
+            chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.reject);
+        }
+
     }
 
     private RequestFromUser parseUserMessage(String message) {

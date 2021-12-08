@@ -41,6 +41,11 @@ public class TermsDictionary {
         termsDictionary.put(term, new TermDefinition(term, definition));
     }
 
+    public void addNewTerm(TermDefinition termDefinition){
+        terms.add(termDefinition);
+        termsDictionary.put(termDefinition.term, termDefinition);
+    }
+
     public TermDefinition getCertainDefinition(String term) {
         return termsDictionary.get(term);
     }
