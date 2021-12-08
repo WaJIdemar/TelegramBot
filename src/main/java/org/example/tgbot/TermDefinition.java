@@ -1,7 +1,5 @@
 package org.example.tgbot;
 
-import java.util.Locale;
-
 public class TermDefinition {
     public String term;
     public String definition;

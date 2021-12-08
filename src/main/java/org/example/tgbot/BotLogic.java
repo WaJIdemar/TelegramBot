@@ -110,8 +110,7 @@ public class BotLogic {
             chatClient.sendMessage(id, standardResponsesToUser.cancel, new RandomOrCertainTermKeyboard());
         else {
             chatClient.sendMessage(id, standardResponsesToUser.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
-            Integer index = termsDictionary.addTermForConsideration(users.get(id).getUserTerm(), message);
-            chatClient.sendMessage(moderatorGroupId, users.get(id).getUserTerm() + " - " + message, new AcceptingKeyboard(index, id));
+            // TODO
         }
         chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
         users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
@@ -172,15 +171,7 @@ public class BotLogic {
     }
 
     public void processingCallBack(String data) {
-        String button = data.split("_")[0];
-        if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.accept)) {
-            termsDictionary.addTermFromConsideration(Integer.parseInt(data.split("_")[1]));
-        } else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.ban)) {
-            users.get(Long.parseLong(data.split("_")[1])).banned = true;
-        }
-        else {
-            termsDictionary.deleteTermFormConsideration(Integer.parseInt(data.split("_")[1]));
-        }
+        // TODO
     }
 
     private RequestFromUser parseUserMessage(String message) {
