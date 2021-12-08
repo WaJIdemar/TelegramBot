@@ -36,16 +36,10 @@ public class TermsDictionary {
         addNewTerm("лор", "информация о мире игры");
     }
 
-    private void addNewTerm(String term, String definition) {
+    public void addNewTerm(String term, String definition) {
         terms.add(new TermDefinition(term, definition));
         termsDictionary.put(term, new TermDefinition(term, definition));
     }
-
-    public void addNewTerm(TermDefinition termDefinition) {
-        terms.add(termDefinition);
-        termsDictionary.put(termDefinition.term, termDefinition);
-    }
-
 
     public TermDefinition getCertainDefinition(String term) {
         return termsDictionary.get(term);

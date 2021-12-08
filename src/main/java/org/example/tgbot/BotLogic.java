@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 public class BotLogic {
     private final Map<Long, User> users = new HashMap<>();
     private final TermsDictionary termsDictionary = new TermsDictionary();
+    private final ModeratingTermsDictionary moderatingTermsDictionary = new ModeratingTermsDictionary();
     private final StandardResponsesToUser standardResponsesToUser = new StandardResponsesToUser();
     private final StandardUserRequest standardUserRequest = new StandardUserRequest();
     private final ChatClient chatClient;
@@ -110,7 +111,10 @@ public class BotLogic {
             chatClient.sendMessage(id, standardResponsesToUser.cancel, new RandomOrCertainTermKeyboard());
         else {
             chatClient.sendMessage(id, standardResponsesToUser.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
-            // TODO
+            Integer index = moderatingTermsDictionary.addNewTerm(users.get(id).getUserTerm(), message);
+            chatClient.sendMessage(moderatorGroupId, "Одобрите пожалуйста, если достойно\n" +
+                    "ня (^_^)6\n______\n" + users.get(id).getUserTerm() + " - " + message + "\n#" + index,
+                    new AcceptingKeyboard(index, id));
         }
         chatClient.sendMessage(id, standardResponsesToUser.outTerm, new RandomOrCertainTermKeyboard());
         users.get(id).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
@@ -171,7 +175,13 @@ public class BotLogic {
     }
 
     public void processingCallBack(String data) {
-        // TODO
+        String button = data.split("_")[0];
+        if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.accept)) {
+            termsDictionary.addNewTerm(moderatingTermsDictionary.getDefinition(Integer.parseInt(data.split("_")[1])).term,
+                                       moderatingTermsDictionary.getDefinition(Integer.parseInt(data.split("_")[1])).definition);
+        } else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.ban)) {
+            users.get(Long.parseLong(data.split("_")[1])).banned = true;
+        }
     }
 
     private RequestFromUser parseUserMessage(String message) {
