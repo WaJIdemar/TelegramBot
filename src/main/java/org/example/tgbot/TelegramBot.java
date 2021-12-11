@@ -1,10 +1,8 @@
 package org.example.tgbot;
 
-import javafx.util.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
@@ -97,9 +95,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMediaGroup.setMedias(photos);
                 execute(sendMediaGroup);
             }
-                sendMessage.setChatId(channelId);
-                sendMessage.setText(text + "\n" + postUrl);
-                execute(sendMessage);
+            sendMessage.setChatId(channelId);
+            sendMessage.setText(text + "\n" + postUrl);
+            setUrlInlineKeyboard(sendMessage, new UrlKeyboard(postUrl));
+            execute(sendMessage);
         } catch (Exception e) {
             sendMessage.setChatId(adminGroupId);
             sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
@@ -134,7 +133,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             sendMessage.setChatId(chatId.toString());
             sendMessage.setText(text);
-            setInlineKeyboard(sendMessage, keyboard);
+            setCallbackInlineKeyboard(sendMessage, keyboard);
             execute(sendMessage);
         } catch (Exception e) {
             sendMessage.setChatId(adminGroupId);
@@ -147,40 +146,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private synchronized void setReplayKeyboard(SendMessage sendMessage, Keyboard keyboard) {
-        if (Objects.equals(keyboard, null)) {
-            sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
-            return;
-        }
-        // Создаем клавиуатуру
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(false);
-
-
-        // Создаем список строк клавиатуры
-        List<KeyboardRow> keyboardTelegram = new ArrayList<>();
-
-        for (List<String> row : keyboard.buttons) {
-            KeyboardRow keyboardRow = new KeyboardRow();
-            for (String button : row)
-                keyboardRow.add(new KeyboardButton(button));
-            keyboardTelegram.add(keyboardRow);
-        }
-        replyKeyboardMarkup.setKeyboard(keyboardTelegram);
-    }
-
-    public void editMessage(Long chatId, Integer messageId, String text) {
-        EditMessageText editMessageText = new EditMessageText();
+    public void sendMessage(Long chatId, String text) {
+        SendMessage sendMessage = new SendMessage();
         try {
-            editMessageText.setChatId(chatId.toString());
-            editMessageText.setMessageId(messageId);
-            editMessageText.setText(text);
-            execute(editMessageText);
+            sendMessage.setChatId(chatId.toString());
+            sendMessage.setText(text);
+            execute(sendMessage);
         } catch (Exception e) {
-            SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(adminGroupId);
             sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
             try {
@@ -191,24 +163,83 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private synchronized void setInlineKeyboard(SendMessage sendMessage, InlineKeyboard keyboard) {
-        if (Objects.equals(keyboard, null))
-            return;
-        List<List<InlineKeyboardButton>> keyboardTelegram = new ArrayList<>();
-
-        for (List<Pair<String, String>> row : keyboard.buttons) {
-            List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
-            for (Pair<String, String> button : row) {
-                InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
-                inlineKeyboardButton.setText(button.getKey());
-                inlineKeyboardButton.setCallbackData(button.getValue());
-                keyboardRow.add(inlineKeyboardButton);
+        private synchronized void setReplayKeyboard (SendMessage sendMessage, Keyboard keyboard){
+            if (Objects.equals(keyboard, null)) {
+                sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
+                return;
             }
-            keyboardTelegram.add(keyboardRow);
+            // Создаем клавиуатуру
+            ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+            sendMessage.setReplyMarkup(replyKeyboardMarkup);
+            replyKeyboardMarkup.setSelective(true);
+            replyKeyboardMarkup.setResizeKeyboard(true);
+            replyKeyboardMarkup.setOneTimeKeyboard(false);
+
+            // Создаем список строк клавиатуры
+            List<KeyboardRow> keyboardTelegram = new ArrayList<>();
+
+            for (List<String> row : keyboard.buttons) {
+                KeyboardRow keyboardRow = new KeyboardRow();
+                for (String button : row)
+                    keyboardRow.add(new KeyboardButton(button));
+                keyboardTelegram.add(keyboardRow);
+            }
+            replyKeyboardMarkup.setKeyboard(keyboardTelegram);
         }
-        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
-        sendMessage.setReplyMarkup(inlineKeyboardMarkup);
-        inlineKeyboardMarkup.setKeyboard(keyboardTelegram);
+
+        public void editMessage (Long chatId, Integer messageId, String text){
+            EditMessageText editMessageText = new EditMessageText();
+            try {
+                editMessageText.setChatId(chatId.toString());
+                editMessageText.setMessageId(messageId);
+                editMessageText.setText(text);
+                execute(editMessageText);
+            } catch (Exception e) {
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setChatId(adminGroupId);
+                sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
+                try {
+                    execute(sendMessage);
+                } catch (TelegramApiException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+
+        private synchronized void setUrlInlineKeyboard(SendMessage sendMessage, InlineKeyboard keyboard){
+            List<List<InlineKeyboardButton>> keyboardTelegram = new ArrayList<>();
+
+            for (List<InlineButton> row : keyboard.buttons) {
+                List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
+                for (InlineButton button : row) {
+                    InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
+                    inlineKeyboardButton.setText(button.text);
+                    inlineKeyboardButton.setUrl(button.data);
+                    keyboardRow.add(inlineKeyboardButton);
+                }
+                keyboardTelegram.add(keyboardRow);
+            }
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+            inlineKeyboardMarkup.setKeyboard(keyboardTelegram);
+        }
+
+        private synchronized void setCallbackInlineKeyboard(SendMessage sendMessage, InlineKeyboard keyboard){
+            List<List<InlineKeyboardButton>> keyboardTelegram = new ArrayList<>();
+
+            for (List<InlineButton> row : keyboard.buttons) {
+                List<InlineKeyboardButton> keyboardRow = new ArrayList<>();
+                for (InlineButton button : row) {
+                    InlineKeyboardButton inlineKeyboardButton = new InlineKeyboardButton();
+                    inlineKeyboardButton.setText(button.text);
+                    inlineKeyboardButton.setCallbackData(button.data);
+                    keyboardRow.add(inlineKeyboardButton);
+                }
+                keyboardTelegram.add(keyboardRow);
+            }
+            InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+            sendMessage.setReplyMarkup(inlineKeyboardMarkup);
+            inlineKeyboardMarkup.setKeyboard(keyboardTelegram);
+        }
     }
-}
 

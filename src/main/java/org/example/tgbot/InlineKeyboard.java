@@ -1,13 +1,11 @@
 package org.example.tgbot;
 
-import javafx.util.Pair;
-
 import java.util.List;
 
 public class InlineKeyboard {
-    public List<List<Pair<String, String>>> buttons;
+    public List<List<InlineButton>> buttons;
 
-    public InlineKeyboard(List<List<Pair<String, String>>> buttons) {
+    public InlineKeyboard(List<List<InlineButton>> buttons) {
         this.buttons = buttons;
     }
 }

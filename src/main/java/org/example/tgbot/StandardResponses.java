@@ -1,6 +1,6 @@
 package org.example.tgbot;
 
-public class StandardResponsesToUser {
+public class StandardResponses {
     public String startMessage = "Привет, я чат-бот! Чтобы узнать что я умею, напишите \"Помощь\"";
     public String helpMessage = """
             Я умею:
@@ -31,4 +31,7 @@ public class StandardResponsesToUser {
             %s - %s
             #%d
             """;
+    public String acceptTerm = "Поздравляю, Ваш термин был одобрен)";
+    public String banUser = "Вы были забанены за некоректное определение(((";
+    public String rejectTerm = "Ваш термин был отклонён(";
 }

@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
+import com.vk.api.sdk.client.actors.ServiceActor;
+import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.callback.longpoll.responses.GetLongPollEventsResponse;
 import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.photos.PhotoSizes;
@@ -19,23 +22,25 @@ public class AppVk implements Runnable {
     private final ChatClient chatClient;
     private final int idVkGroup;
     private final VkApiClient vk;
-    private final GroupActor actor;
+    private final GroupActor groupActor;
+    private final ServiceActor serviceActor;
     private final Gson g;
 
-    public AppVk(int idVkGroup, String accessToken, VkApiClient vk, ChatClient chatClient) {
+    public AppVk(int id, String secretKey, String serviceKey, int idVkGroup, String accessToken, VkApiClient vk, ChatClient chatClient) {
         this.chatClient = chatClient;
         this.idVkGroup = idVkGroup;
         this.vk = vk;
-        this.actor = new GroupActor(idVkGroup, accessToken);
+        this.groupActor = new GroupActor(idVkGroup, accessToken);
+        this.serviceActor = new ServiceActor(id, secretKey,serviceKey);
         g = new Gson();
     }
 
     @Override
     public void run() {
         try {
-            String ts = vk.groups().getLongPollServer(actor, idVkGroup).execute().getTs();
-            String server = vk.groups().getLongPollServer(actor, idVkGroup).execute().getServer();
-            String key = vk.groups().getLongPollServer(actor, idVkGroup).execute().getKey();
+            String ts = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getTs();
+            String server = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getServer();
+            String key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
             while (true) {
                 GetLongPollEventsResponse eventsResponse = vk.longPoll().getEvents(server, key, ts).execute();
                 List<JsonObject> updates = eventsResponse.getUpdates();
@@ -66,5 +71,11 @@ public class AppVk implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public List<String> getPost(int count) throws ClientException, ApiException {
+        Integer offset = 0;
+        vk.wall().get(serviceActor).ownerId(-idVkGroup).count(count).offset(offset).execute();
+        return new ArrayList<>();
     }
 }

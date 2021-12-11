@@ -3,21 +3,21 @@ package org.example.tgbot;
 import java.util.*;
 
 public class ModeratingTermsDictionary {
-    private final Map<Integer, TermDefinition> moderatingTermsDictionary= new HashMap<>();
-    private final Integer upBound = 1000;
+    private final Map<Integer, ModeratorTermDefinition> moderatingTermsDictionary= new HashMap<>();
     private Integer currentIndex = 0;
 
-    public Integer addNewTerm(String term, String definition) {
-        Integer index = currentIndex;
-        moderatingTermsDictionary.put(index, new TermDefinition(term, definition));
+    public Integer addNewTerm(String term, String definition, Long userId) {
+        Integer id = currentIndex;
+        moderatingTermsDictionary.put(id, new ModeratorTermDefinition(new TermDefinition(term, definition), userId));
         currentIndex++;
-        if (currentIndex.equals(upBound)) {
-            currentIndex = 0;
-        }
-        return index;
+        return id;
     }
 
     public TermDefinition getDefinition(Integer index) {
-        return moderatingTermsDictionary.get(index);
+        return moderatingTermsDictionary.get(index).termDefinition;
+    }
+
+    public ModeratorTermDefinition get(Integer key){
+        return moderatingTermsDictionary.get(key);
     }
 }
