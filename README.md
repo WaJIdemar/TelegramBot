@@ -9,9 +9,8 @@
   * TELEGRAM_BOT_TOKEN - токен телеграм бота 
   * TELEGRAM_MODERATOR_GROUP_ID - ID группы модераторов или одного модератора 
   * TELEGRAM_ADMIN_GROUP_ID - ID группы админов или одного админа, куда будут отправляться информация об ошибках
+  * TELEGRAM_CHANNEL_ID - ID канала в telegram куда будут отправляться посты из группы ВК
   * ID_VK_GROUP - ID группы ВК откуда будут браться посты и пересылаться в канал в telegram
-  * APP_VK_SECRET_KEY - секретный ключь приложения ВК 
-  * APP_VK_ID - ID приложения ВК 
-  * APP_VK_ACCESS_TOKEN - Токен приложения ВК
+  * APP_VK_ACCESS_TOKEN - ключ доступа к сообществу в ВК
 4. Сделать деплой
 5. Включить бота
