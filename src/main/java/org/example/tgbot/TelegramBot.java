@@ -2,9 +2,13 @@ package org.example.tgbot;
 
 import javafx.util.Pair;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
@@ -18,15 +22,17 @@ import java.util.List;
 import java.util.Objects;
 
 public class TelegramBot extends TelegramLongPollingBot {
-    private final String Name;
-    private final String Token;
+    private final String name;
+    private final String token;
     private BotLogic botLogic;
     private final String adminGroupId;
+    private final String channelId;
 
-    public TelegramBot(String name, String token, String adminGroupId) {
-        Name = name;
-        Token = token;
+    public TelegramBot(String name, String token, String adminGroupId, String channelId) {
+        this.name = name;
+        this.token = token;
         this.adminGroupId = adminGroupId;
+        this.channelId = channelId;
     }
 
     public void setBotLogic(BotLogic botLogic) {
@@ -35,12 +41,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return Name;
+        return name;
     }
 
     @Override
     public String getBotToken() {
-        return Token;
+        return token;
     }
 
     @Override
@@ -72,6 +78,35 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } catch (TelegramApiException ex) {
                     ex.printStackTrace();
                 }
+            }
+        }
+    }
+
+    public void sendPostToChannel(String text, List<String> photosUrl, String postUrl) {
+        SendMessage sendMessage = new SendMessage();
+        SendMediaGroup sendMediaGroup = new SendMediaGroup();
+        try {
+            if (!Objects.equals(photosUrl, new ArrayList<String>())) {
+                List<InputMedia> photos = new ArrayList<>();
+                for (String url : photosUrl) {
+                    InputMedia inputMediaPhoto = new InputMediaPhoto();
+                    inputMediaPhoto.setMedia(url);
+                    photos.add(inputMediaPhoto);
+                }
+                sendMediaGroup.setChatId(channelId);
+                sendMediaGroup.setMedias(photos);
+                execute(sendMediaGroup);
+            }
+                sendMessage.setChatId(channelId);
+                sendMessage.setText(text + "\n" + postUrl);
+                execute(sendMessage);
+        } catch (Exception e) {
+            sendMessage.setChatId(adminGroupId);
+            sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException ex) {
+                ex.printStackTrace();
             }
         }
     }

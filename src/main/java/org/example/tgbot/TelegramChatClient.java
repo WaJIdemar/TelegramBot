@@ -1,5 +1,7 @@
 package org.example.tgbot;
 
+import java.util.List;
+
 public class TelegramChatClient implements ChatClient {
 
     private final TelegramBot telegramBot;
@@ -21,6 +23,11 @@ public class TelegramChatClient implements ChatClient {
     @Override
     public void editMessage(Long chatId, Integer messageId, String text) {
         telegramBot.editMessage(chatId, messageId, text);
+    }
+
+    @Override
+    public void sendPostToChannel(String text, List<String> photosUrl, String postUrl) {
+        telegramBot.sendPostToChannel(text, photosUrl, postUrl);
     }
 
 }
