@@ -80,7 +80,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendPostToChannel(String text, List<String> photosUrl, String postUrl) {
+    public void sendPostToChannel(String text, List<String> photosUrl, String postUrl, InlineKeyboard keyboard) {
         SendMessage sendMessage = new SendMessage();
         SendMediaGroup sendMediaGroup = new SendMediaGroup();
         try {
@@ -97,7 +97,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             sendMessage.setChatId(channelId);
             sendMessage.setText(text + "\n" + postUrl);
-            setUrlInlineKeyboard(sendMessage, new UrlKeyboard(postUrl));
+            setUrlInlineKeyboard(sendMessage, keyboard);
             execute(sendMessage);
         } catch (Exception e) {
             sendMessage.setChatId(adminGroupId);

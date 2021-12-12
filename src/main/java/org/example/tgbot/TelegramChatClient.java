@@ -31,8 +31,8 @@ public class TelegramChatClient implements ChatClient {
     }
 
     @Override
-    public void sendPostToChannel(String text, List<String> photosUrl, String postUrl) {
-        telegramBot.sendPostToChannel(text, photosUrl, postUrl);
+    public void sendPostToChannel(String text, List<String> photosUrl, String postUrl, InlineKeyboard keyboard) {
+        telegramBot.sendPostToChannel(text, photosUrl, postUrl, keyboard);
     }
 
 }

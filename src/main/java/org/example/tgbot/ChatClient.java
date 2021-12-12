@@ -8,5 +8,5 @@ public interface ChatClient {
     void sendMessage(Long chatId, String text, InlineKeyboard keyboard);
     void sendMessage(Long chatId, String text);
     void editMessage(Long chatId, Integer messageId, String text);
-    void sendPostToChannel(String text, List<String> photosUrl, String postUrl);
+    void sendPostToChannel(String text, List<String> photosUrl, String postUrl, InlineKeyboard keyboard);
 }

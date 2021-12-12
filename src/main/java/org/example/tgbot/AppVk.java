@@ -31,7 +31,7 @@ public class AppVk implements Runnable {
         this.idVkGroup = idVkGroup;
         this.vk = vk;
         this.groupActor = new GroupActor(idVkGroup, accessToken);
-        this.serviceActor = new ServiceActor(id, secretKey,serviceKey);
+        this.serviceActor = new ServiceActor(id, secretKey, serviceKey);
         g = new Gson();
     }
 
@@ -63,7 +63,9 @@ public class AppVk implements Runnable {
                                 }
                             }
                         }
-                        chatClient.sendPostToChannel(wallpost.getText(), photosUrl, "https://vk.com/wall-"+ idVkGroup +"_" + wallpost.getId());
+                        chatClient.sendPostToChannel(wallpost.getText(), photosUrl,
+                                "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
+                                new UrlKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
                     }
                 }
                 ts = eventsResponse.getTs();
@@ -71,11 +73,5 @@ public class AppVk implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public List<String> getPost(int count) throws ClientException, ApiException {
-        Integer offset = 0;
-        vk.wall().get(serviceActor).ownerId(-idVkGroup).count(count).offset(offset).execute();
-        return new ArrayList<>();
     }
 }
