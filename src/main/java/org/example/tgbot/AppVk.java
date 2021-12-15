@@ -5,14 +5,8 @@ import com.google.gson.JsonObject;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.client.actors.ServiceActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.objects.callback.longpoll.responses.GetLongPollEventsResponse;
-import com.vk.api.sdk.objects.photos.Photo;
-import com.vk.api.sdk.objects.photos.PhotoSizes;
-import com.vk.api.sdk.objects.photos.PhotoSizesType;
 import com.vk.api.sdk.objects.wall.Wallpost;
-import com.vk.api.sdk.objects.wall.WallpostAttachment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,13 +19,18 @@ public class AppVk implements Runnable {
     private final GroupActor groupActor;
     private final ServiceActor serviceActor;
     private final Gson g;
+    private final Long groupIdSendPostTo;
+    private final Long adminGroupId;
 
-    public AppVk(int id, String secretKey, String serviceKey, int idVkGroup, String accessToken, VkApiClient vk, ChatClient chatClient) {
+    public AppVk(int appVkId, String secretKey, String serviceKey, int vkGroupId, String accessToken, VkApiClient vk,
+                 ChatClient chatClient, Long groupIdSendPostTo, Long adminGroupId) {
         this.chatClient = chatClient;
-        this.idVkGroup = idVkGroup;
+        this.idVkGroup = vkGroupId;
         this.vk = vk;
-        this.groupActor = new GroupActor(idVkGroup, accessToken);
-        this.serviceActor = new ServiceActor(id, secretKey, serviceKey);
+        this.groupActor = new GroupActor(vkGroupId, accessToken);
+        this.serviceActor = new ServiceActor(appVkId, secretKey, serviceKey);
+        this.groupIdSendPostTo = groupIdSendPostTo;
+        this.adminGroupId = adminGroupId;
         g = new Gson();
     }
 
@@ -47,31 +46,34 @@ public class AppVk implements Runnable {
                 for (JsonObject jsonObject : updates) {
                     String title = jsonObject.get("type").getAsString();
                     if (Objects.equals(title, "wall_post_new")) {
-                        List<String> photosUrl = new ArrayList<>();
+//                        List<String> photosUrl = new ArrayList<>();
                         Wallpost wallpost = g.fromJson(jsonObject.get("object"), Wallpost.class);
-                        if (!Objects.equals(wallpost.getAttachments(), null)) {
-                            for (WallpostAttachment wallpostAttachment : wallpost.getAttachments()) {
-                                if (!Objects.equals(wallpostAttachment.getPhoto(), null)) {
-                                    Photo photo = wallpostAttachment.getPhoto();
-                                    String url = null;
-                                    for (PhotoSizes photoSize : photo.getSizes()) {
-                                        if (Objects.equals(photoSize.getType(), PhotoSizesType.Z)) {
-                                            url = photoSize.getUrl().toString();
-                                        }
-                                    }
-                                    photosUrl.add(url);
-                                }
-                            }
-                        }
-                        chatClient.sendPostToChannel(wallpost.getText(), photosUrl,
-                                "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
-                                new UrlKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
+//                        if (!Objects.equals(wallpost.getAttachments(), null)) {
+//                            for (WallpostAttachment wallpostAttachment : wallpost.getAttachments()) {
+//                                if (!Objects.equals(wallpostAttachment.getPhoto(), null)) {
+//                                    Photo photo = wallpostAttachment.getPhoto();
+//                                    String url = null;
+//                                    boolean typeZ = false;
+//                                    for (PhotoSizes photoSize : photo.getSizes()) {
+//                                        if (Objects.equals(photoSize.getType(), PhotoSizesType.Z)) {
+//                                            url = photoSize.getUrl().toString();
+//                                            typeZ = true;
+//                                        }
+//                                        else if (Objects.equals(photoSize.getType(), PhotoSizesType.R) && !typeZ)
+//                                            url = photoSize.getUrl().toString();
+//                                    }
+//                                    photosUrl.add(url);
+//                                }
+//                            }
+//                        }
+                        chatClient.sendMessage(groupIdSendPostTo, wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
+                                new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
                     }
                 }
                 ts = eventsResponse.getTs();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            chatClient.sendMessage(adminGroupId, "Ошибка appVk'a:" + "\n" + e);
         }
     }
 }

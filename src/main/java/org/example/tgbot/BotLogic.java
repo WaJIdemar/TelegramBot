@@ -14,8 +14,9 @@ public class BotLogic {
     private final DecisionOnTerm decisionOnTerm;
     private final Long moderatorGroupId;
     private final Long adminGroupId;
+    private final Long channelId;
 
-    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId, TermsDictionary termsDictionary,
+    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId, Long channelId, TermsDictionary termsDictionary,
                     ModeratingTermsDictionary moderatingTermsDictionary, StandardResponses standardResponses,
                     StandardUserRequest standardUserRequest, CallbackButton callbackButton, DecisionOnTerm decisionOnTerm) {
         this.chatClient = chatClient;
@@ -27,11 +28,11 @@ public class BotLogic {
         this.standardUserRequest = standardUserRequest;
         this.callbackButton = callbackButton;
         this.decisionOnTerm = decisionOnTerm;
-
+        this.channelId = channelId;
     }
 
     public void respondUser(Long userId, String message) {
-        if (Objects.equals(userId, moderatorGroupId) || Objects.equals(userId, adminGroupId))
+        if (Objects.equals(userId, moderatorGroupId) || Objects.equals(userId, adminGroupId) || Objects.equals(userId, channelId))
             return;
         message = message.toLowerCase(Locale.ROOT);
         if (Objects.equals(message, standardUserRequest.start)) {
