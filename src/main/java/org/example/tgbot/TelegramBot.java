@@ -78,7 +78,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendMessage(Long chatId, String text, UrlKeyboard keyboard) {
+    public synchronized void sendMessage(Long chatId, String text, UrlKeyboard keyboard) {
         SendMessage sendMessage = new SendMessage();
 //        SendMediaGroup sendMediaGroup = new SendMediaGroup();
         try {
@@ -144,7 +144,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public void sendMessage(Long chatId, String text) {
+    public synchronized void sendMessage(Long chatId, String text) {
         SendMessage sendMessage = new SendMessage();
         try {
             sendMessage.setChatId(chatId.toString());
@@ -185,7 +185,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setKeyboard(keyboardTelegram);
     }
 
-    public void editMessage(Long chatId, Integer messageId, String text) {
+    public synchronized void editMessage(Long chatId, Integer messageId, String text) {
         EditMessageText editMessageText = new EditMessageText();
         try {
             editMessageText.setChatId(chatId.toString());
