@@ -13,11 +13,11 @@ public class ModeratingTermsDictionary {
         return id;
     }
 
-    public TermDefinition getDefinition(Integer index) {
-        return moderatingTermsDictionary.get(index).termDefinition;
+    public TermDefinition getDefinition(Integer id) {
+        return moderatingTermsDictionary.get(id).termDefinition;
     }
 
-    public ModeratorTermDefinition get(Integer key){
-        return moderatingTermsDictionary.get(key);
+    public ModeratorTermDefinition get(Integer id){
+        return moderatingTermsDictionary.get(id);
     }
 }

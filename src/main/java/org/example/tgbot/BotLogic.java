@@ -45,7 +45,7 @@ public class BotLogic {
         }
         var request = parseUserMessage(message);
         switch (users.get(userId).getDialogState()) {
-            case WAIT_TERM -> acceptTermUser(userId, message, request); // Ждём пока пользователь введёт конкретный термин
+            case WAIT_TERM -> acceptUserTerm(userId, message, request); // Ждём пока пользователь введёт конкретный термин
             case WAIT_WORD_INPUT -> acceptWordInput(userId, message, request); // Ждём пока пользователь введёт слово, чтобы выдать определение или попросить написать определение
             case WAIT_DEFINITION -> acceptDefinition(userId, message, request); // Ждём опеределение от пользователя
             case WAIT_CONFIRMATION_DEFINITION_INPUT -> acceptConfirmationDefinitionInput(userId, request);// Ждём подтверждения, что пользователь хочет написать определение
@@ -54,7 +54,7 @@ public class BotLogic {
         }
     }
 
-    private void acceptTermUser(Long userId, String message, UserItent userItent) {
+    private void acceptUserTerm(Long userId, String message, UserItent userItent) {
         if (userItent == UserItent.CANCEL) {
             users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             chatClient.sendMessage(userId, standardResponses.cancel, new RandomOrCertainTermKeyboard());
