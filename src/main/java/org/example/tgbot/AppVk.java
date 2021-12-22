@@ -70,7 +70,6 @@ public class AppVk implements Runnable {
                                     String url = null;
                                     for (PhotoSizes photoSize : photo.getSizes()) {
                                         if (Objects.equals(photoSize.getType(), PhotoSizesType.Z)
-                                                || Objects.equals(photoSize.getType(), PhotoSizesType.Y)
                                                 || Objects.equals(photoSize.getType(), PhotoSizesType.X)) {
                                             url = photoSize.getUrl().toString();
                                         }
