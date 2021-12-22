@@ -20,6 +20,7 @@ public class Main {
             int appVkId = Integer.parseInt(System.getenv("APP_VK_ID"));
             String appVkSecretKey = System.getenv("APP_VK_SECRET_KEY");
             String appVkServiceKey = System.getenv("APP_VK_SERVICE_KEY");
+            String mongoUri = System.getenv("MONGO_URI");
             TransportClient transportClient = new HttpTransportClient();
             VkApiClient vk = new VkApiClient(transportClient);
             TelegramBot telegramBot = new TelegramBot(botName, botToken, adminGroupId);
@@ -29,7 +30,8 @@ public class Main {
                     new DecisionOnTerm());
             telegramBot.setBotLogic(botLogic);
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            AppVk appVk = new AppVk(appVkId, appVkSecretKey, appVkServiceKey, idVkGroup, accessGroupToken, vk,
+            AppVkData appVkData = new AppVkData(mongoUri);
+            AppVk appVk = new AppVk(appVkId, appVkSecretKey, appVkServiceKey, idVkGroup, accessGroupToken, vk, appVkData,
                     telegramChatClient, telegramChannelId, adminGroupId);
             Thread appVkThread = new Thread(appVk);
             appVkThread.start();

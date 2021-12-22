@@ -190,7 +190,7 @@ public class BotLogic {
             chatClient.sendMessage(moderatingTermsDictionary.get(keyModeratorTermsDictionary).userId, standardResponses.acceptTerm);
             chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.accept);
         } else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.ban)) {
-            users.get(Long.parseLong(data.split("_")[1])).banned = true;
+            users.get(moderatingTermsDictionary.get(keyModeratorTermsDictionary).userId).banned = true;
             chatClient.sendMessage(moderatingTermsDictionary.get(keyModeratorTermsDictionary).userId, standardResponses.banUser);
             chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.ban);
         }
