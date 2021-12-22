@@ -83,24 +83,56 @@ public class TelegramBot extends TelegramLongPollingBot {
     public synchronized void sendMessage(Long chatId, String text, List<String> photosUrl, UrlKeyboard keyboard) {
         SendMessage sendMessage = new SendMessage();
         SendMediaGroup sendMediaGroup = new SendMediaGroup();
-        SendPhoto sendPhoto = new SendPhoto();
         try {
-            if (!Objects.equals(photosUrl, new ArrayList<String>()) && photosUrl.size() != 1) {
-                List<InputMedia> photos = new ArrayList<>();
-                for (String url : photosUrl) {
-                    InputMedia inputMediaPhoto = new InputMediaPhoto();
-                    inputMediaPhoto.setMedia(url);
-                    photos.add(inputMediaPhoto);
-                }
-                sendMediaGroup.setChatId(chatId.toString());
-                sendMediaGroup.setMedias(photos);
-                execute(sendMediaGroup);
+            List<InputMedia> photos = new ArrayList<>();
+            for (String url : photosUrl) {
+                InputMedia inputMediaPhoto = new InputMediaPhoto();
+                inputMediaPhoto.setMedia(url);
+                photos.add(inputMediaPhoto);
             }
-            else if (!Objects.equals(photosUrl, new ArrayList<String>())){
-                sendPhoto.setChatId(chatId.toString());
-                sendPhoto.setPhoto(new InputFile().setMedia(photosUrl.get(0)));
-                execute(sendPhoto);
+            sendMediaGroup.setChatId(chatId.toString());
+            sendMediaGroup.setMedias(photos);
+            execute(sendMediaGroup);
+            sendMessage.setChatId(chatId.toString());
+            sendMessage.setText(text);
+            setUrlInlineKeyboard(sendMessage, keyboard);
+            execute(sendMessage);
+        } catch (Exception e) {
+            sendMessage.setChatId(adminGroupId.toString());
+            sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException ex) {
+                ex.printStackTrace();
             }
+        }
+    }
+
+    public synchronized void sendMessage(Long chatId, String text, String photoUrl, UrlKeyboard keyboard) {
+        SendPhoto sendPhoto = new SendPhoto();
+        SendMessage sendMessage = new SendMessage();
+        try {
+            sendPhoto.setChatId(chatId.toString());
+            sendPhoto.setPhoto(new InputFile().setMedia(photoUrl));
+            execute(sendPhoto);
+            sendMessage.setChatId(chatId.toString());
+            sendMessage.setText(text);
+            setUrlInlineKeyboard(sendMessage, keyboard);
+            execute(sendMessage);
+        } catch (Exception e) {
+            sendMessage.setChatId(adminGroupId.toString());
+            sendMessage.setText("Ошибка telegram-bot'a:\n" + e);
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    public synchronized void sendMessage(Long chatId, String text, UrlKeyboard keyboard) {
+        SendMessage sendMessage = new SendMessage();
+        try {
             sendMessage.setChatId(chatId.toString());
             sendMessage.setText(text);
             setUrlInlineKeyboard(sendMessage, keyboard);

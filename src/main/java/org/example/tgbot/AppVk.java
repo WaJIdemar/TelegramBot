@@ -70,8 +70,8 @@ public class AppVk implements Runnable {
                                     String url = null;
                                     for (PhotoSizes photoSize : photo.getSizes()) {
                                         if (Objects.equals(photoSize.getType(), PhotoSizesType.Z)
-                                        || Objects.equals(photoSize.getType(), PhotoSizesType.Y)
-                                        || Objects.equals(photoSize.getType(), PhotoSizesType.X)) {
+                                                || Objects.equals(photoSize.getType(), PhotoSizesType.Y)
+                                                || Objects.equals(photoSize.getType(), PhotoSizesType.X)) {
                                             url = photoSize.getUrl().toString();
                                         }
                                     }
@@ -79,16 +79,28 @@ public class AppVk implements Runnable {
                                 }
                             }
                         }
-                        chatClient.sendMessage(groupIdSendPostTo,
-                                wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
-                                photosUrl,
-                                new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
-                        appVkTs.changeTs(eventsResponse.getTs());
-                        appVkData.changeAppVkTs(appVkTs);
+                        if (photosUrl.size() == 1) {
+                            chatClient.sendMessage(groupIdSendPostTo,
+                                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
+                                    photosUrl.get(0),
+                                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
+                        } else if (photosUrl.size() == 0)
+                            chatClient.sendMessage(groupIdSendPostTo,
+                                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
+                                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
+                        else
+                            chatClient.sendMessage(groupIdSendPostTo,
+                                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
+                                    photosUrl,
+                                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
                     }
                 }
-            }
-            catch (Exception e){
+                String nextTs = eventsResponse.getTs();
+                if (!Objects.equals(appVkTs.getTs(), nextTs)) {
+                    appVkTs.changeTs(eventsResponse.getTs());
+                    appVkData.changeAppVkTs(appVkTs);
+                }
+            } catch (Exception e) {
                 chatClient.sendMessage(adminGroupId, "Ошибка при получении поста, appVk'a:" + "\n" + e);
                 Integer nextTs = Integer.parseInt(appVkTs.getTs()) + 1;
                 appVkTs.changeTs(Integer.toString(nextTs));

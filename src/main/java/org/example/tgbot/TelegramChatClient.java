@@ -35,4 +35,14 @@ public class TelegramChatClient implements ChatClient {
         telegramBot.sendMessage(chatId, text, photosUrl, keyboard);
     }
 
+    @Override
+    public void sendMessage(Long chatId, String text, String photoUrl, UrlKeyboard keyboard) {
+        telegramBot.sendMessage(chatId, text, photoUrl, keyboard);
+    }
+
+    @Override
+    public void sendMessage(Long chatId, String text, UrlKeyboard keyboard) {
+        telegramBot.sendMessage(chatId, text, keyboard);
+    }
+
 }
