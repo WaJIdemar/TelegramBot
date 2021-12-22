@@ -5,6 +5,9 @@ import com.google.gson.JsonObject;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.client.actors.ServiceActor;
+import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ClientException;
+import com.vk.api.sdk.exceptions.LongPollServerKeyExpiredException;
 import com.vk.api.sdk.objects.callback.longpoll.responses.GetLongPollEventsResponse;
 import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.photos.PhotoSizes;
@@ -99,14 +102,20 @@ public class AppVk implements Runnable {
                     appVkTs.changeTs(eventsResponse.getTs());
                     appVkData.changeAppVkTs(appVkTs);
                 }
-            } catch (Exception e) {
+            } catch (LongPollServerKeyExpiredException ex){
+                chatClient.sendMessage(adminGroupId, "Обновление ключа для appVk'a");
+                try {
+                    key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
+                } catch (Exception e) {
+                    chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа для appVk'a:" + "\n" + e );
+                }
+            }
+            catch (Exception e) {
                 chatClient.sendMessage(adminGroupId, "Ошибка при получении поста, appVk'a:" + "\n" + e);
                 Integer nextTs = Integer.parseInt(appVkTs.getTs()) + 1;
                 appVkTs.changeTs(Integer.toString(nextTs));
                 appVkData.changeAppVkTs(appVkTs);
             }
-
         }
-
     }
 }
