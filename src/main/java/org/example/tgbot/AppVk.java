@@ -100,7 +100,6 @@ public class AppVk implements Runnable {
                     appVkData.changeAppVkTs(appVkTs);
                 }
             } catch (LongPollServerKeyExpiredException ex) {
-                chatClient.sendMessage(adminGroupId, "Обновление ключа для appVk'a");
                 try {
                     key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
                 } catch (Exception e) {
