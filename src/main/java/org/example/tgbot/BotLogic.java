@@ -4,9 +4,9 @@ import java.util.*;
 
 
 public class BotLogic {
-    private final Map<Long, User> users = new HashMap<>();
-    private final TermsDictionary termsDictionary;
-    private final ModeratingTermsDictionary moderatingTermsDictionary;
+    private final UsersRepository users;
+    private final TermsDictionaryRepo termsDictionary;
+    private final ModeratingTermsDictionaryRepo moderatingTermsDictionaryRepo;
     private final StandardResponses standardResponses;
     private final StandardUserRequest standardUserRequest;
     private final ChatClient chatClient;
@@ -16,19 +16,21 @@ public class BotLogic {
     private final Long adminGroupId;
     private final Long channelId;
 
-    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId, Long channelId, TermsDictionary termsDictionary,
-                    ModeratingTermsDictionary moderatingTermsDictionary, StandardResponses standardResponses,
-                    StandardUserRequest standardUserRequest, CallbackButton callbackButton, DecisionOnTerm decisionOnTerm) {
+    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId, Long channelId, TermsDictionaryRepo termsDictionary,
+                    ModeratingTermsDictionaryRepo moderatingTermsDictionaryRepo, StandardResponses standardResponses,
+                    StandardUserRequest standardUserRequest, CallbackButton callbackButton, DecisionOnTerm decisionOnTerm,
+                    UsersRepository users) {
         this.chatClient = chatClient;
         this.moderatorGroupId = moderatorGroupId;
         this.adminGroupId = adminGroupId;
         this.termsDictionary = termsDictionary;
-        this.moderatingTermsDictionary = moderatingTermsDictionary;
+        this.moderatingTermsDictionaryRepo = moderatingTermsDictionaryRepo;
         this.standardResponses = standardResponses;
         this.standardUserRequest = standardUserRequest;
         this.callbackButton = callbackButton;
         this.decisionOnTerm = decisionOnTerm;
         this.channelId = channelId;
+        this.users = users;
     }
 
     public void respondUser(Long userId, String message) {
@@ -36,166 +38,168 @@ public class BotLogic {
             return;
         message = message.toLowerCase(Locale.ROOT);
         if (Objects.equals(message, standardUserRequest.start)) {
-            if (users.containsKey(userId))
-                users.replace(userId, new User(userId));
-            else
-                users.put(userId, new User(userId));
+            users.put(new User(userId));
             chatClient.sendMessage(userId, standardResponses.startMessage, new DefaultKeyboard());
             return;
         }
         var request = parseUserMessage(message);
-        switch (users.get(userId).getDialogState()) {
-            case WAIT_TERM -> acceptUserTerm(userId, message, request); // Ждём пока пользователь введёт конкретный термин
-            case WAIT_WORD_INPUT -> acceptWordInput(userId, message, request); // Ждём пока пользователь введёт слово, чтобы выдать определение или попросить написать определение
-            case WAIT_DEFINITION -> acceptDefinition(userId, message, request); // Ждём опеределение от пользователя
-            case WAIT_CONFIRMATION_DEFINITION_INPUT -> acceptConfirmationDefinitionInput(userId, request);// Ждём подтверждения, что пользователь хочет написать определение
-            case WAIT_RANDOM_OR_CERTAIN_TERM -> acceptRandomOrCertainTerm(userId, request); // Ждём какое определение хочет пользователь конкретно или конкретное
-            case DEFAULT -> acceptDefaultState(userId, request); // Стандартное состояние
+        User user = users.getUserOrCreate(userId);
+        switch (user.getDialogState()) {
+            case WAIT_TERM -> acceptUserTerm(user, message, request); // Ждём пока пользователь введёт конкретный термин
+            case WAIT_WORD_INPUT -> acceptWordInput(user, message, request); // Ждём пока пользователь введёт слово, чтобы выдать определение или попросить написать определение
+            case WAIT_DEFINITION -> acceptDefinition(user, message, request); // Ждём опеределение от пользователя
+            case WAIT_CONFIRMATION_DEFINITION_INPUT -> acceptConfirmationDefinitionInput(user, request);// Ждём подтверждения, что пользователь хочет написать определение
+            case WAIT_RANDOM_OR_CERTAIN_TERM -> acceptRandomOrCertainTerm(user, request); // Ждём какое определение хочет пользователь конкретно или конкретное
+            case DEFAULT -> acceptDefaultState(user, request); // Стандартное состояние
         }
+        users.put(user);
     }
 
-    private void acceptUserTerm(Long userId, String message, UserItent userItent) {
+    private void acceptUserTerm(User user, String message, UserItent userItent) {
         if (userItent == UserItent.CANCEL) {
-            users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
-            chatClient.sendMessage(userId, standardResponses.cancel, new RandomOrCertainTermKeyboard());
-            chatClient.sendMessage(userId, standardResponses.outTerm, new RandomOrCertainTermKeyboard());
+            user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+            chatClient.sendMessage(user.getUserId(), standardResponses.cancel, new RandomOrCertainTermKeyboard());
+            chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
         } else {
             if (termsDictionary.containsTermOnDictionary(message)) {
                 TermDefinition termDefinition = termsDictionary.getCertainDefinition(message);
                 String text = termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
                         + " - " + termDefinition.definition;
-                chatClient.sendMessage(userId, text, new RandomOrCertainTermKeyboard());
-                chatClient.sendMessage(userId, standardResponses.outTerm, new RandomOrCertainTermKeyboard());
-                users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+                chatClient.sendMessage(user.getUserId(), text, new RandomOrCertainTermKeyboard());
+                chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
+                user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             } else {
-                users.get(userId).changeUserTerm(message);
+                user.setUserTerm(message);
                 ArrayList<String> similarTerms = termsDictionary.searchSimilarTermsOnDictionary(message);
-                users.get(userId).changeUserSimilarWordsTermsDictionary(similarTerms);
+                user.setUserSimilarWordsTermsDictionary(similarTerms);
 
                 if (Objects.equals(similarTerms, new ArrayList<String>())) {
-                    if (!users.get(userId).banned) {
-                        chatClient.sendMessage(userId, standardResponses.termNotFound.formatted(message), new YesOrNoKeyboard());
-                        users.get(userId).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
+                    if (!user.banned) {
+                        chatClient.sendMessage(user.getUserId(), standardResponses.termNotFound.formatted(message), new YesOrNoKeyboard());
+                        user.setDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
                     } else {
-                        users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
-                        chatClient.sendMessage(userId, standardResponses.notFondTermsAndUserBanned, new RandomOrCertainTermKeyboard());
-                        chatClient.sendMessage(userId, standardResponses.outTerm, new RandomOrCertainTermKeyboard());
+                        user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+                        chatClient.sendMessage(user.getUserId(), standardResponses.notFondTermsAndUserBanned, new RandomOrCertainTermKeyboard());
+                        chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
                     }
                 } else {
-                    users.get(userId).changeUserSimilarWordsTermsDictionary(similarTerms);
-                    chatClient.sendMessage(userId, standardResponses.userAgree.formatted(String.join(", ", similarTerms)),
+                    user.setUserSimilarWordsTermsDictionary(similarTerms);
+                    chatClient.sendMessage(user.getUserId(), standardResponses.userAgree.formatted(String.join(", ", similarTerms)),
                             new CancelKeyboard());
-                    users.get(userId).changeDialogState(DialogState.WAIT_WORD_INPUT);
+                    user.setDialogState(DialogState.WAIT_WORD_INPUT);
                 }
             }
         }
     }
 
-    private void acceptWordInput(Long userId, String message, UserItent userItent) {
+    private void acceptWordInput(User user, String message, UserItent userItent) {
         if (userItent == UserItent.CANCEL) {
-            if (!users.get(userId).banned) {
-                chatClient.sendMessage(userId, standardResponses.writeDefinition.formatted(users.get(userId).getUserTerm()), new YesOrNoKeyboard());
-                users.get(userId).changeDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
+            if (!user.banned) {
+                chatClient.sendMessage(user.getUserId(), standardResponses.writeDefinition.formatted(user.getUserTerm()), new YesOrNoKeyboard());
+                user.setDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
             } else {
-                users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
-                chatClient.sendMessage(userId, standardResponses.notFondTermsAndUserBanned, new RandomOrCertainTermKeyboard());
-                chatClient.sendMessage(userId, standardResponses.outTerm, new RandomOrCertainTermKeyboard());
+                user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+                chatClient.sendMessage(user.getUserId(), standardResponses.notFondTermsAndUserBanned, new RandomOrCertainTermKeyboard());
+                chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
             }
 
-        } else if (users.get(userId).getUserSimilarWordsTermsDictionary().contains(message)) {
+        } else if (user.getUserSimilarWordsTermsDictionary().contains(message)) {
             TermDefinition termDefinition = termsDictionary.getCertainDefinition(message);
             String text = termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
                     + " - " + termDefinition.definition;
-            chatClient.sendMessage(userId, text, new RandomOrCertainTermKeyboard());
-            chatClient.sendMessage(userId, standardResponses.outTerm, new RandomOrCertainTermKeyboard());
-            users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+            chatClient.sendMessage(user.getUserId(), text, new RandomOrCertainTermKeyboard());
+            chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
+            user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
         } else {
-            chatClient.sendMessage(userId, standardResponses.invalidInputWaitWord, new CancelKeyboard());
+            chatClient.sendMessage(user.getUserId(), standardResponses.invalidInputWaitWord, new CancelKeyboard());
         }
     }
 
-    private void acceptDefinition(Long userId, String message, UserItent userItent) {
+    private void acceptDefinition(User user, String message, UserItent userItent) {
         if (userItent == UserItent.CANCEL)
-            chatClient.sendMessage(userId, standardResponses.cancel, new RandomOrCertainTermKeyboard());
+            chatClient.sendMessage(user.getUserId(), standardResponses.cancel, new RandomOrCertainTermKeyboard());
         else {
-            chatClient.sendMessage(userId, standardResponses.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
-            Integer index = moderatingTermsDictionary.addNewTerm(users.get(userId).getUserTerm(), message, userId);
+            chatClient.sendMessage(user.getUserId(), standardResponses.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
+            Long index = moderatingTermsDictionaryRepo.addNewTerm(user.getUserTerm(), message, user.getUserId());
             chatClient.sendMessage(moderatorGroupId,
-                    standardResponses.messageForModerator.formatted(users.get(userId).getUserTerm(), message, index),
+                    standardResponses.messageForModerator.formatted(user.getUserTerm(), message, index),
             new AcceptingKeyboard(index));
         }
-        chatClient.sendMessage(userId, standardResponses.outTerm, new RandomOrCertainTermKeyboard());
-        users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+        chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
+        user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
     }
 
 
-    private void acceptConfirmationDefinitionInput(Long userId, UserItent userItent) {
+    private void acceptConfirmationDefinitionInput(User user, UserItent userItent) {
         if (userItent == UserItent.YES) {
-            chatClient.sendMessage(userId, standardResponses.waitDefinition.formatted(users.get(userId).getUserTerm()), new CancelKeyboard());
-            users.get(userId).changeDialogState(DialogState.WAIT_DEFINITION);
+            chatClient.sendMessage(user.getUserId(), standardResponses.waitDefinition.formatted(user.getUserTerm()), new CancelKeyboard());
+            user.setDialogState(DialogState.WAIT_DEFINITION);
         } else if (userItent == UserItent.NO) {
-            chatClient.sendMessage(userId, standardResponses.cancel, new RandomOrCertainTermKeyboard());
-            chatClient.sendMessage(userId, standardResponses.outTerm, new RandomOrCertainTermKeyboard());
-            users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+            chatClient.sendMessage(user.getUserId(), standardResponses.cancel, new RandomOrCertainTermKeyboard());
+            chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
+            user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
         } else {
-            chatClient.sendMessage(userId, standardResponses.invalidInputYesOrNo, new YesOrNoKeyboard());
+            chatClient.sendMessage(user.getUserId(), standardResponses.invalidInputYesOrNo, new YesOrNoKeyboard());
         }
     }
 
-    private void acceptRandomOrCertainTerm(Long userId, UserItent userItent) {
+    private void acceptRandomOrCertainTerm(User user, UserItent userItent) {
         switch (userItent) {
             case RANDOM_TERM -> {
                 TermDefinition termDefinition = termsDictionary.getRandomTerm();
                 String text = termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
                         + " - " + termDefinition.definition;
-                chatClient.sendMessage(userId, text, new RandomOrCertainTermKeyboard());
-                users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+                chatClient.sendMessage(user.getUserId(), text, new RandomOrCertainTermKeyboard());
+                user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             }
             case CERTAIN_TERM -> {
-                chatClient.sendMessage(userId, standardResponses.waitTerm, new CancelKeyboard());
-                users.get(userId).changeDialogState(DialogState.WAIT_TERM);
+                chatClient.sendMessage(user.getUserId(), standardResponses.waitTerm, new CancelKeyboard());
+                user.setDialogState(DialogState.WAIT_TERM);
             }
             case BACK -> {
-                chatClient.sendMessage(userId, standardResponses.cancel, new DefaultKeyboard());
-                users.get(userId).changeDialogState(DialogState.DEFAULT);
+                chatClient.sendMessage(user.getUserId(), standardResponses.cancel, new DefaultKeyboard());
+                user.setDialogState(DialogState.DEFAULT);
             }
             default -> {
-                chatClient.sendMessage(userId, standardResponses.invalidInputRandomOrCertain,
+                chatClient.sendMessage(user.getUserId(), standardResponses.invalidInputRandomOrCertain,
                         new RandomOrCertainTermKeyboard());
-                users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+                user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             }
         }
     }
 
-    private void acceptDefaultState(Long userId, UserItent userItent) {
+    private void acceptDefaultState(User user, UserItent userItent) {
         switch (userItent) {
-            case HELP -> chatClient.sendMessage(userId, standardResponses.helpMessage, new DefaultKeyboard());
-            case GREETING -> chatClient.sendMessage(userId, standardResponses.gettingMessage, new DefaultKeyboard());
+            case HELP -> chatClient.sendMessage(user.getUserId(), standardResponses.helpMessage, new DefaultKeyboard());
+            case GREETING -> chatClient.sendMessage(user.getUserId(), standardResponses.gettingMessage, new DefaultKeyboard());
             case OUT_TERM -> {
-                chatClient.sendMessage(userId, standardResponses.outTerm, new RandomOrCertainTermKeyboard());
-                users.get(userId).changeDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
+                chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
+                user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             }
             default -> {
-                chatClient.sendMessage(userId, standardResponses.unknownCommand, new DefaultKeyboard());
-                users.get(userId).changeDialogState(DialogState.DEFAULT);
+                chatClient.sendMessage(user.getUserId(), standardResponses.unknownCommand, new DefaultKeyboard());
+                user.setDialogState(DialogState.DEFAULT);
             }
         }
     }
 
     public void processingCallBack(Long chatId, Integer messageId, String text, String data) {
         String button = data.split("_")[0];
-        Integer keyModeratorTermsDictionary = Integer.parseInt(data.split("_")[1]);
+        Long keyModeratorTermsDictionary = Long.parseLong(data.split("_")[1]);
+        ModeratorTermDefinition moderatorTermDefinition = moderatingTermsDictionaryRepo.getModeratorTermDefinition(keyModeratorTermsDictionary);
         if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.accept)) {
-            termsDictionary.addNewTerm(moderatingTermsDictionary.getDefinition(keyModeratorTermsDictionary));
-            chatClient.sendMessage(moderatingTermsDictionary.get(keyModeratorTermsDictionary).userId, standardResponses.acceptTerm);
+            termsDictionary.addNewTerm(moderatorTermDefinition.getTermDefinition());
+            chatClient.sendMessage(moderatorTermDefinition.getUserId(), standardResponses.acceptTerm);
             chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.accept);
         } else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.ban)) {
-            users.get(moderatingTermsDictionary.get(keyModeratorTermsDictionary).userId).banned = true;
-            chatClient.sendMessage(moderatingTermsDictionary.get(keyModeratorTermsDictionary).userId, standardResponses.banUser);
+            User user = users.getUserOrCreate(moderatorTermDefinition.getUserId());
+            user.banned = true;
+            users.put(user);
+            chatClient.sendMessage(moderatorTermDefinition.getUserId(), standardResponses.banUser);
             chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.ban);
         }
         else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.reject)){
-            chatClient.sendMessage(moderatingTermsDictionary.get(keyModeratorTermsDictionary).userId, standardResponses.rejectTerm);
+            chatClient.sendMessage(moderatorTermDefinition.getUserId(), standardResponses.rejectTerm);
             chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.reject);
         }
 

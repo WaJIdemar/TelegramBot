@@ -21,16 +21,18 @@ public class Main {
         String appVkSecretKey = System.getenv("APP_VK_SECRET_KEY");
         String appVkServiceKey = System.getenv("APP_VK_SERVICE_KEY");
         String mongoUri = System.getenv("MONGO_URI");
+        String appVkTsId = System.getenv("APP_VK_TS_ID");
         TransportClient transportClient = new HttpTransportClient();
         VkApiClient vk = new VkApiClient(transportClient);
         TelegramBot telegramBot = new TelegramBot(botName, botToken, adminGroupId);
         TelegramChatClient telegramChatClient = new TelegramChatClient(telegramBot);
-        BotLogic botLogic = new BotLogic(telegramChatClient, moderatorGroupId, adminGroupId, telegramChannelId, new TermsDictionary(),
-                new ModeratingTermsDictionary(), new StandardResponses(), new StandardUserRequest(), new CallbackButton(),
-                new DecisionOnTerm());
+        BotLogic botLogic = new BotLogic(telegramChatClient, moderatorGroupId, adminGroupId, telegramChannelId,
+                new TermsDictionaryRepo(mongoUri),
+                new ModeratingTermsDictionaryRepo(mongoUri), new StandardResponses(), new StandardUserRequest(), new CallbackButton(),
+                new DecisionOnTerm(), new UsersRepository(mongoUri));
         telegramBot.setBotLogic(botLogic);
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        AppVkData appVkData = new AppVkData(mongoUri);
+        AppVkData appVkData = new AppVkData(mongoUri, appVkTsId);
         AppVk appVk = new AppVk(appVkId, appVkSecretKey, appVkServiceKey, idVkGroup, accessGroupToken, vk, appVkData,
                 telegramChatClient, telegramChannelId, adminGroupId);
         Thread appVkThread = new Thread(appVk);

@@ -3,19 +3,23 @@ package org.example.tgbot;
 import java.util.ArrayList;
 
 public class User {
-    private final Long id;
+    private Long userId;
     private DialogState dialogState;
     private ArrayList<String> similarWordsTermsDictionary;
     private String userTerm;
     public Boolean banned;
 
+    public User() {
+    }
+
+
     public User(Long userId) {
-        id = userId;
+        this.userId = userId;
         dialogState = DialogState.DEFAULT;
         banned = false;
     }
 
-    public void changeDialogState(DialogState newDialogState) {
+    public void setDialogState(DialogState newDialogState) {
         dialogState = newDialogState;
     }
 
@@ -24,10 +28,10 @@ public class User {
     }
 
     public Long getUserId() {
-        return id;
+        return userId;
     }
 
-    public void changeUserSimilarWordsTermsDictionary(ArrayList<String> terms) {
+    public void setUserSimilarWordsTermsDictionary(ArrayList<String> terms) {
         similarWordsTermsDictionary = terms;
     }
 
@@ -39,7 +43,7 @@ public class User {
         return userTerm;
     }
 
-    public void changeUserTerm(String userTerm){
+    public void setUserTerm(String userTerm) {
         this.userTerm = userTerm;
     }
 }

@@ -2,10 +2,14 @@ package org.example.tgbot;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.vk.api.sdk.actions.LongPoll;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.client.actors.ServiceActor;
+import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.exceptions.LongPollServerKeyExpiredException;
+import com.vk.api.sdk.exceptions.LongPollServerTsException;
 import com.vk.api.sdk.objects.callback.longpoll.responses.GetLongPollEventsResponse;
 import com.vk.api.sdk.objects.photos.Photo;
 import com.vk.api.sdk.objects.photos.PhotoSizes;
@@ -51,65 +55,83 @@ public class AppVk implements Runnable {
             key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
             appVkTs = appVkData.getAppVkTs();
         } catch (Exception e) {
-            chatClient.sendMessage(adminGroupId, "Ошибка при получении поста, appVk'a:" + "\n" + e);
-            new RuntimeException(e);
+            chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа и сервера для appVk'a:" + "\n" + e.getMessage());
+            return;
         }
         while (true) {
+            GetLongPollEventsResponse eventsResponse = null;
             try {
-                GetLongPollEventsResponse eventsResponse = vk.longPoll().getEvents(server, key, appVkTs.getTs()).execute();
+                eventsResponse = vk.longPoll().getEvents(server, key, appVkTs.getTs()).execute();
+            } catch (LongPollServerKeyExpiredException e) {
+                try {
+                    key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
+                } catch (Exception ex) {
+                    chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа для appVk'a:" + "\n" + ex.getMessage());
+                    return;
+                }
+            } catch (LongPollServerTsException e) {
+                try {
+                    appVkTs.changeTs(vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getTs());
+                } catch (Exception ex) {
+                    chatClient.sendMessage(adminGroupId, "Ошибка при получении нового номера события для appVk'a:" + "\n" + ex.getMessage());
+                    return;
+                }
+            } catch (Exception e) {
+                chatClient.sendMessage(adminGroupId, "Ошибка при получении поста appVk'a:" + "\n" + e.getMessage());
+                return;
+            }
+            try {
+                assert eventsResponse != null;
                 List<JsonObject> updates = eventsResponse.getUpdates();
                 for (JsonObject jsonObject : updates) {
                     String title = jsonObject.get("type").getAsString();
                     if (Objects.equals(title, "wall_post_new")) {
-                        Wallpost wallpost = g.fromJson(jsonObject.get("object"), Wallpost.class);
-                        List<String> photosUrl = new ArrayList<>();
-                        if (!Objects.equals(wallpost.getAttachments(), null)) {
-                            for (WallpostAttachment wallpostAttachment : wallpost.getAttachments()) {
-                                if (!Objects.equals(wallpostAttachment.getPhoto(), null)) {
-                                    Photo photo = wallpostAttachment.getPhoto();
-                                    String url = null;
-                                    for (PhotoSizes photoSize : photo.getSizes()) {
-                                        if (Objects.equals(photoSize.getType(), PhotoSizesType.Z)
-                                                || Objects.equals(photoSize.getType(), PhotoSizesType.X)) {
-                                            url = photoSize.getUrl().toString();
-                                        }
-                                    }
-                                    photosUrl.add(url);
-                                }
-                            }
-                        }
-                        if (photosUrl.size() == 1) {
-                            chatClient.sendMessage(groupIdSendPostTo,
-                                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
-                                    photosUrl.get(0),
-                                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
-                        } else if (photosUrl.size() == 0)
-                            chatClient.sendMessage(groupIdSendPostTo,
-                                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
-                                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
-                        else
-                            chatClient.sendMessage(groupIdSendPostTo,
-                                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
-                                    photosUrl,
-                                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
+                        acceptNewPostVk(jsonObject);
                     }
                 }
                 String nextTs = eventsResponse.getTs();
                 if (!Objects.equals(appVkTs.getTs(), nextTs)) {
-                    appVkTs.changeTs(eventsResponse.getTs());
+                    appVkTs.changeTs(nextTs); // заменить
                     appVkData.changeAppVkTs(appVkTs);
                 }
-            } catch (LongPollServerKeyExpiredException ex) {
-                try {
-                    key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
-                } catch (Exception e) {
-                    chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа для appVk'a:" + "\n" + e);
-                    new RuntimeException(e);
-                }
             } catch (Exception e) {
-                chatClient.sendMessage(adminGroupId, "Ошибка при получении поста, appVk'a:" + "\n" + e);
-                new RuntimeException(e);
+                chatClient.sendMessage(adminGroupId, "Ошибка при обработке поста в appVk'a:" + "\n" + e.getMessage());
+                return;
             }
         }
+    }
+
+    private void acceptNewPostVk(JsonObject jsonObject) {
+        Wallpost wallpost = g.fromJson(jsonObject.get("object"), Wallpost.class);
+        List<String> photosUrl = new ArrayList<>();
+        if (!Objects.equals(wallpost.getAttachments(), null)) {
+            for (WallpostAttachment wallpostAttachment : wallpost.getAttachments()) {
+                if (!Objects.equals(wallpostAttachment.getPhoto(), null)) {
+                    Photo photo = wallpostAttachment.getPhoto();
+                    String url = null;
+                    for (PhotoSizes photoSize : photo.getSizes()) {
+                        if (Objects.equals(photoSize.getType(), PhotoSizesType.Z)
+                                || Objects.equals(photoSize.getType(), PhotoSizesType.X)) {
+                            url = photoSize.getUrl().toString();
+                        }
+                    }
+                    photosUrl.add(url);
+                }
+            }
+        }
+        if (photosUrl.size() == 1) {
+            chatClient.sendMessage(groupIdSendPostTo,
+                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
+                    photosUrl.get(0),
+                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
+        } else if (photosUrl.size() == 0)
+            chatClient.sendMessage(groupIdSendPostTo,
+                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
+                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
+        else
+            chatClient.sendMessage(groupIdSendPostTo,
+                    wallpost.getText() + "\n\n" + "https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId(),
+                    photosUrl,
+                    new OpenInVkKeyboard("https://vk.com/wall-" + idVkGroup + "_" + wallpost.getId()));
     }
 }

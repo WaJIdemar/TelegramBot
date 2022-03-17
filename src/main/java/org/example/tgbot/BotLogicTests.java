@@ -8,8 +8,9 @@ public class BotLogicTests {
 
     private final TestChatClient testChatClient = new TestChatClient();
     private final BotLogic botLogic = new BotLogic(testChatClient, 12L, 11L, 13L,
-            new TermsDictionary(), new ModeratingTermsDictionary(), new StandardResponses(),
-            new StandardUserRequest(), new CallbackButton(), new DecisionOnTerm());
+            new TermsDictionaryRepo(System.getenv("MONGO_URI")), new ModeratingTermsDictionaryRepo(System.getenv("MONGO_URI")), new StandardResponses(),
+            new StandardUserRequest(), new CallbackButton(), new DecisionOnTerm(),
+            new UsersRepository(System.getenv("MONGO_URI")));
 
     @org.junit.jupiter.api.Test
     void testBotLogicStart() {
