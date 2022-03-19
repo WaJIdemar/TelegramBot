@@ -11,4 +11,9 @@ public class TermDefinition {
         this.term = term;
         this.definition = definition;
     }
+
+    public String createToString(){
+        return term.substring(0, 1).toUpperCase() + term.substring(1)
+                + " - " + definition;
+    }
 }

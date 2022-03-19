@@ -25,13 +25,23 @@ public class StandardResponses {
             "были забанены(";
     public String unknownCommand = "Извините, я вас не понимаю(";
     public String messageForModerator = """
+            ID: %s
             Одобрите пожалуйста, если достойно
             ня (^_^)6
             ______
             %s - %s
             #%d
             """;
-    public String acceptTerm = "Поздравляю, Ваш термин был одобрен)";
-    public String banUser = "Вы были забанены за некоректное определение(((";
-    public String rejectTerm = "Ваш термин был отклонён(";
+    public String acceptTerm = """
+            Поздравляю, Ваш термин:
+            %s.
+            Был одобрен)""";
+    public String banUser = """
+            Вы были забанены за некоректное определение:
+            %s
+            (((""";
+    public String rejectTerm = """
+            Ваш термин:
+            %s.
+            Был отклонён(""";
 }

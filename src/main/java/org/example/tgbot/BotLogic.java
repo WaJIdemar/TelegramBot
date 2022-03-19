@@ -66,8 +66,7 @@ public class BotLogic {
         } else {
             if (termsDictionary.containsTermOnDictionary(message)) {
                 TermDefinition termDefinition = termsDictionary.getCertainDefinition(message);
-                String text = termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
-                        + " - " + termDefinition.definition;
+                String text = termDefinition.createToString();
                 chatClient.sendMessage(user.getUserId(), text, new RandomOrCertainTermKeyboard());
                 chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
                 user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
@@ -108,8 +107,7 @@ public class BotLogic {
 
         } else if (user.getUserSimilarWordsTermsDictionary().contains(message)) {
             TermDefinition termDefinition = termsDictionary.getCertainDefinition(message);
-            String text = termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
-                    + " - " + termDefinition.definition;
+            String text = termDefinition.createToString();
             chatClient.sendMessage(user.getUserId(), text, new RandomOrCertainTermKeyboard());
             chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
             user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
@@ -125,7 +123,7 @@ public class BotLogic {
             chatClient.sendMessage(user.getUserId(), standardResponses.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
             Long index = moderatingTermsDictionaryRepo.addNewTerm(user.getUserTerm(), message, user.getUserId());
             chatClient.sendMessage(moderatorGroupId,
-                    standardResponses.messageForModerator.formatted(user.getUserTerm(), message, index),
+                    standardResponses.messageForModerator.formatted(user.getUserId(), user.getUserTerm(), message, index),
             new AcceptingKeyboard(index));
         }
         chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
@@ -190,19 +188,23 @@ public class BotLogic {
         String button = data.split("_")[0];
         Long keyModeratorTermsDictionary = Long.parseLong(data.split("_")[1]);
         ModeratorTermDefinition moderatorTermDefinition = moderatingTermsDictionaryRepo.getModeratorTermDefinition(keyModeratorTermsDictionary);
+        TermDefinition termDefinition = moderatorTermDefinition.getTermDefinition();
         if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.accept)) {
-            termsDictionary.addNewTerm(moderatorTermDefinition.getTermDefinition());
-            chatClient.sendMessage(moderatorTermDefinition.getUserId(), standardResponses.acceptTerm);
+            termsDictionary.addNewTerm(termDefinition);
+            chatClient.sendMessage(moderatorTermDefinition.getUserId(),
+                    standardResponses.acceptTerm.formatted(termDefinition.createToString()));
             chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.accept);
         } else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.ban)) {
             User user = users.getUserOrCreate(moderatorTermDefinition.getUserId());
             user.banned = true;
             users.put(user);
-            chatClient.sendMessage(moderatorTermDefinition.getUserId(), standardResponses.banUser);
+            chatClient.sendMessage(moderatorTermDefinition.getUserId(),
+                    standardResponses.banUser.formatted(termDefinition.createToString()));
             chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.ban);
         }
         else if (Objects.equals(button.toLowerCase(Locale.ROOT), callbackButton.reject)){
-            chatClient.sendMessage(moderatorTermDefinition.getUserId(), standardResponses.rejectTerm);
+            chatClient.sendMessage(moderatorTermDefinition.getUserId(),
+                    standardResponses.rejectTerm.formatted(termDefinition.createToString()));
             chatClient.editMessage(chatId, messageId, text + "\n______\n" + decisionOnTerm.reject);
         }
 
