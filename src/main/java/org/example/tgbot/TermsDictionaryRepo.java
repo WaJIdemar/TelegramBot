@@ -3,6 +3,7 @@ package org.example.tgbot;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.pojo.ClassModel;
@@ -15,7 +16,6 @@ import java.util.Random;
 
 public class TermsDictionaryRepo {
     private final MongoCollection<TermDefinition> termsDictionary;
-    private final Random random = new Random();
     private final LevenshteinCalculator levenshteinCalculator = new LevenshteinCalculator();
 
     public TermsDictionaryRepo(String mongoUri) {
@@ -60,7 +60,7 @@ public class TermsDictionaryRepo {
     }
 
     public TermDefinition getRandomTerm() {
-        var list = termsDictionary.find();
+        var list = termsDictionary.aggregate(List.of(Aggregates.sample(1)));
         return list.first();
     }
 }

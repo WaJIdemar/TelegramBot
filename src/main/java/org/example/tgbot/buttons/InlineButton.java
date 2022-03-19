@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.buttons;
 
 public class InlineButton {
     public String text;

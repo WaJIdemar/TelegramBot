@@ -1,6 +1,5 @@
-package org.example.tgbot;
+package org.example.tgbot.keyboards;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultKeyboard extends Keyboard {

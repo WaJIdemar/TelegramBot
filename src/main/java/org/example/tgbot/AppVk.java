@@ -2,12 +2,9 @@ package org.example.tgbot;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.vk.api.sdk.actions.LongPoll;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.client.actors.GroupActor;
 import com.vk.api.sdk.client.actors.ServiceActor;
-import com.vk.api.sdk.exceptions.ApiException;
-import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.exceptions.LongPollServerKeyExpiredException;
 import com.vk.api.sdk.exceptions.LongPollServerTsException;
 import com.vk.api.sdk.objects.callback.longpoll.responses.GetLongPollEventsResponse;
@@ -16,6 +13,7 @@ import com.vk.api.sdk.objects.photos.PhotoSizes;
 import com.vk.api.sdk.objects.photos.PhotoSizesType;
 import com.vk.api.sdk.objects.wall.Wallpost;
 import com.vk.api.sdk.objects.wall.WallpostAttachment;
+import org.example.tgbot.keyboards.OpenInVkKeyboard;
 
 import java.util.ArrayList;
 import java.util.List;

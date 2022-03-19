@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.tests;
 
 import static org.junit.jupiter.api.Assertions.*;
 

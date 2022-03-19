@@ -1,4 +1,6 @@
-package org.example.tgbot;
+package org.example.tgbot.tests;
+
+import org.example.tgbot.LevenshteinCalculator;
 
 import java.util.Locale;
 

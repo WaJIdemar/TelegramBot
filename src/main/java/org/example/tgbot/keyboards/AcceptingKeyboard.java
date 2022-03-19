@@ -1,5 +1,7 @@
-package org.example.tgbot;
+package org.example.tgbot.keyboards;
 
+
+import org.example.tgbot.buttons.InlineButton;
 
 import java.util.List;
 

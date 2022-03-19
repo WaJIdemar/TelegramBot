@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.keyboards;
 
 import java.util.List;
 

@@ -1,5 +1,9 @@
 package org.example.tgbot;
 
+import org.example.tgbot.keyboards.CallbackKeyboard;
+import org.example.tgbot.keyboards.Keyboard;
+import org.example.tgbot.keyboards.UrlKeyboard;
+
 import java.util.List;
 
 public interface ChatClient {

@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.buttons;
 
 public class CallbackButton {
     public String accept = "accept";

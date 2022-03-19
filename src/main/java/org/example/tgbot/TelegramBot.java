@@ -1,5 +1,9 @@
 package org.example.tgbot;
 
+import org.example.tgbot.buttons.InlineButton;
+import org.example.tgbot.keyboards.CallbackKeyboard;
+import org.example.tgbot.keyboards.Keyboard;
+import org.example.tgbot.keyboards.UrlKeyboard;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
