@@ -1,4 +1,6 @@
-package org.example.tgbot;
+package org.example.tgbot.databases.elements;
+
+import org.example.tgbot.DialogState;
 
 import java.util.ArrayList;
 

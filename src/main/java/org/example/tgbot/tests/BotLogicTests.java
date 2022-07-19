@@ -2,18 +2,27 @@ package org.example.tgbot.tests;
 
 import org.example.tgbot.*;
 import org.example.tgbot.buttons.CallbackButton;
-
-import java.util.Locale;
+import org.example.tgbot.databases.elements.TermDefinition;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class BotLogicTests {
 
-    private final TestChatClient testChatClient = new TestChatClient();
-    private final BotLogic botLogic = new BotLogic(testChatClient, 12L, 11L, 13L,
-            new TermsDictionaryRepo(System.getenv("MONGO_URI")), new ModeratingTermsDictionaryRepo(System.getenv("MONGO_URI")), new StandardResponses(),
-            new StandardUserRequest(), new CallbackButton(), new DecisionOnTerm(),
-            new UsersRepository(System.getenv("MONGO_URI")));
+    private final TestChatClient testChatClient;
+    private final TestDatabaseUsers testDatabaseUsers;
+    private final TestTermsDictionary testTermsDictionary;
+    private final TestModeratingTermsDictionary testModeratingTermsDictionary;
+    private final BotLogic botLogic;
+
+    private BotLogicTests(){
+        testChatClient = new TestChatClient();
+        testDatabaseUsers = new TestDatabaseUsers();
+        testTermsDictionary = new TestTermsDictionary();
+        testModeratingTermsDictionary = new TestModeratingTermsDictionary();
+        botLogic = new BotLogic(testChatClient, 12L, 11L, 13L, testTermsDictionary,
+                testModeratingTermsDictionary, new StandardResponses(),
+                new StandardUserRequest(), new CallbackButton(), new DecisionOnTerm(),testDatabaseUsers);
+    }
 
     @org.junit.jupiter.api.Test
     void testBotLogicStart() {
@@ -72,6 +81,7 @@ public class BotLogicTests {
 
     @org.junit.jupiter.api.Test
     void testBotLogicCertainTerm() {
+        testTermsDictionary.addNewTerm(new TermDefinition("лор", "бла-бла-бла"));
         botLogic.respondUser(1233L, "/start");
         botLogic.respondUser(1233L, "дай определение");
         assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
@@ -80,14 +90,13 @@ public class BotLogicTests {
         assertEquals("Определение какого термина хотите узнать?", testChatClient.currentMes);
         assertEquals(1233L, testChatClient.currentChatId);
         botLogic.respondUser(1233L, "лор");
-//        assertEquals(new TermsDictionary().getCertainDefinition("лор").term,
-//                testChatClient.prevMes.split(" - ")[0].toLowerCase(Locale.ROOT));
         assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
         assertEquals(1233L, testChatClient.currentChatId);
     }
 
     @org.junit.jupiter.api.Test
     void testBotLogicSimilarTerm(){
+        testTermsDictionary.addNewTerm(new TermDefinition("лор", "бла-бла-бла"));
         botLogic.respondUser(123L, "/start");
         botLogic.respondUser(123L, "дай определение");
         botLogic.respondUser(123L, "конкретное");

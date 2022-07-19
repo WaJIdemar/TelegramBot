@@ -1,23 +1,21 @@
-package org.example.tgbot;
+package org.example.tgbot.databases;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
-import org.bson.BsonArray;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.Conventions;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.example.tgbot.databases.elements.User;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class UsersRepository {
-    private MongoCollection<User> users;
+public class UsersRepository implements DatabaseUsers {
+    private final MongoCollection<User> users;
 
     public UsersRepository(String mongoUri) {
         var codecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),

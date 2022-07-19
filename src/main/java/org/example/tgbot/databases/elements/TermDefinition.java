@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.databases.elements;
 
 public class TermDefinition {
     public String term;

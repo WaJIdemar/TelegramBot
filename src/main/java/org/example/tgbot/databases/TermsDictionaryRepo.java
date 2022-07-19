@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.databases;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClients;
@@ -9,12 +9,13 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.Conventions;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.example.tgbot.LevenshteinCalculator;
+import org.example.tgbot.databases.elements.TermDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
-public class TermsDictionaryRepo {
+public class TermsDictionaryRepo implements TermsDictionary {
     private final MongoCollection<TermDefinition> termsDictionary;
     private final LevenshteinCalculator levenshteinCalculator = new LevenshteinCalculator();
 
@@ -29,10 +30,6 @@ public class TermsDictionaryRepo {
         termsDictionary = MongoClients.create(mongoUri).getDatabase("TopKube_TelegramBot")
                 .withCodecRegistry(codecRegistry)
                 .getCollection("TermsDictionary", TermDefinition.class);
-    }
-
-    public void addNewTerm(String term, String definition) {
-        termsDictionary.insertOne(new TermDefinition(term, definition));
     }
 
     public void addNewTerm(TermDefinition termDefinition) {

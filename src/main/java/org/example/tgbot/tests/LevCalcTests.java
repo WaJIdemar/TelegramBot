@@ -1,9 +1,6 @@
 package org.example.tgbot.tests;
 
 import org.example.tgbot.LevenshteinCalculator;
-
-import java.util.Locale;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LevCalcTests {

@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.appvk;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -13,13 +13,14 @@ import com.vk.api.sdk.objects.photos.PhotoSizes;
 import com.vk.api.sdk.objects.photos.PhotoSizesType;
 import com.vk.api.sdk.objects.wall.Wallpost;
 import com.vk.api.sdk.objects.wall.WallpostAttachment;
+import org.example.tgbot.ChatClient;
 import org.example.tgbot.keyboards.OpenInVkKeyboard;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class AppVk implements Runnable {
+public class GetterPostsVk implements Runnable {
     private final ChatClient chatClient;
     private final int idVkGroup;
     private final VkApiClient vk;
@@ -28,11 +29,12 @@ public class AppVk implements Runnable {
     private final Gson g;
     private final Long groupIdSendPostTo;
     private final Long adminGroupId;
-    private final AppVkData appVkData;
+    private final GetterPostsVkDatabase getterPostsVkDatabase;
     private AppVkTs appVkTs;
+    private boolean errorStatus;
 
-    public AppVk(int appVkId, String secretKey, String serviceKey, int vkGroupId, String accessToken, VkApiClient vk, AppVkData appVkData,
-                 ChatClient chatClient, Long groupIdSendPostTo, Long adminGroupId) {
+    public GetterPostsVk(int appVkId, String secretKey, String serviceKey, int vkGroupId, String accessToken, VkApiClient vk, GetterPostsVkDatabase getterPostsVkDatabase,
+                         ChatClient chatClient, Long groupIdSendPostTo, Long adminGroupId) {
         this.chatClient = chatClient;
         this.idVkGroup = vkGroupId;
         this.vk = vk;
@@ -40,46 +42,30 @@ public class AppVk implements Runnable {
         this.serviceActor = new ServiceActor(appVkId, secretKey, serviceKey);
         this.groupIdSendPostTo = groupIdSendPostTo;
         this.adminGroupId = adminGroupId;
-        this.appVkData = appVkData;
+        this.getterPostsVkDatabase = getterPostsVkDatabase;
         g = new Gson();
+        errorStatus = false;
     }
 
     @Override
     public void run() {
         String server = null;
         String key = null;
+        appVkTs = getterPostsVkDatabase.getAppVkTs();
         try {
             server = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getServer();
             key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
-            appVkTs = appVkData.getAppVkTs();
         } catch (Exception e) {
-            chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа и сервера для appVk'a:" + "\n" + e.getMessage());
+            chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа или сервера для appVk'a:" + "\n" + e.getMessage());
             return;
         }
         while (true) {
-            GetLongPollEventsResponse eventsResponse = null;
-            try {
-                eventsResponse = vk.longPoll().getEvents(server, key, appVkTs.getTs()).execute();
-            } catch (LongPollServerKeyExpiredException e) {
-                try {
-                    key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
-                } catch (Exception ex) {
-                    chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа для appVk'a:" + "\n" + ex.getMessage());
-                    return;
-                }
-            } catch (LongPollServerTsException e) {
-                try {
-                    appVkTs.changeTs(vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getTs());
-                } catch (Exception ex) {
-                    chatClient.sendMessage(adminGroupId, "Ошибка при получении нового номера события для appVk'a:" + "\n" + ex.getMessage());
-                    return;
-                }
-            } catch (Exception e) {
-                chatClient.sendMessage(adminGroupId, "Ошибка при получении поста appVk'a:" + "\n" + e.getMessage());
+            GetLongPollEventsResponse eventsResponse = getLongPollEventsResponse(server, key);
+            if (errorStatus)
                 return;
-            }
+            if (eventsResponse == null)
+                continue;
             try {
-                assert eventsResponse != null;
                 List<JsonObject> updates = eventsResponse.getUpdates();
                 for (JsonObject jsonObject : updates) {
                     String title = jsonObject.get("type").getAsString();
@@ -90,13 +76,38 @@ public class AppVk implements Runnable {
                 String nextTs = eventsResponse.getTs();
                 if (!Objects.equals(appVkTs.getTs(), nextTs)) {
                     appVkTs.changeTs(nextTs); // заменить
-                    appVkData.changeAppVkTs(appVkTs);
+                    getterPostsVkDatabase.changeAppVkTs(appVkTs);
                 }
             } catch (Exception e) {
                 chatClient.sendMessage(adminGroupId, "Ошибка при обработке поста в appVk'a:" + "\n" + e.getMessage());
                 return;
             }
         }
+    }
+
+    private GetLongPollEventsResponse getLongPollEventsResponse(String server, String key){
+        GetLongPollEventsResponse eventsResponse = null;
+        try {
+            eventsResponse = vk.longPoll().getEvents(server, key, appVkTs.getTs()).execute();
+        } catch (LongPollServerKeyExpiredException e) {
+            try {
+                key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
+            } catch (Exception ex) {
+                chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа для appVk'a:" + "\n" + ex.getMessage());
+                errorStatus = true;
+            }
+        } catch (LongPollServerTsException e) {
+            try {
+                appVkTs.changeTs(vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getTs());
+            } catch (Exception ex) {
+                chatClient.sendMessage(adminGroupId, "Ошибка при получении нового номера события для appVk'a:" + "\n" + ex.getMessage());
+                errorStatus = true;
+            }
+        } catch (Exception e) {
+            chatClient.sendMessage(adminGroupId, "Ошибка при получении поста appVk'a:" + "\n" + e.getMessage());
+            errorStatus = true;
+        }
+        return eventsResponse;
     }
 
     private void acceptNewPostVk(JsonObject jsonObject) {

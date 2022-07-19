@@ -3,7 +3,12 @@ package org.example.tgbot;
 import com.vk.api.sdk.client.TransportClient;
 import com.vk.api.sdk.client.VkApiClient;
 import com.vk.api.sdk.httpclient.HttpTransportClient;
+import org.example.tgbot.appvk.GetterPostsVkDatabase;
+import org.example.tgbot.appvk.GetterPostsVk;
 import org.example.tgbot.buttons.CallbackButton;
+import org.example.tgbot.databases.ModeratingTermsDictionaryRepo;
+import org.example.tgbot.databases.TermsDictionaryRepo;
+import org.example.tgbot.databases.UsersRepository;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -33,10 +38,10 @@ public class Main {
                 new DecisionOnTerm(), new UsersRepository(mongoUri));
         telegramBot.setBotLogic(botLogic);
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        AppVkData appVkData = new AppVkData(mongoUri, appVkTsId);
-        AppVk appVk = new AppVk(appVkId, appVkSecretKey, appVkServiceKey, idVkGroup, accessGroupToken, vk, appVkData,
+        GetterPostsVkDatabase getterPostsVkDatabase = new GetterPostsVkDatabase(mongoUri, appVkTsId);
+        GetterPostsVk getterPostsVk = new GetterPostsVk(appVkId, appVkSecretKey, appVkServiceKey, idVkGroup, accessGroupToken, vk, getterPostsVkDatabase,
                 telegramChatClient, telegramChannelId, adminGroupId);
-        Thread appVkThread = new Thread(appVk);
+        Thread appVkThread = new Thread(getterPostsVk);
         appVkThread.start();
         botsApi.registerBot(telegramBot);
     }

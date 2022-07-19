@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.databases;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClients;
@@ -8,10 +8,12 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.Conventions;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.example.tgbot.databases.elements.ModeratorTermDefinition;
+import org.example.tgbot.databases.elements.TermDefinition;
 
 import java.util.*;
 
-public class ModeratingTermsDictionaryRepo {
+public class ModeratingTermsDictionaryRepo implements ModeratingTermsDictionary {
     private final MongoCollection<ModeratorTermDefinition> moderatorTermsDictionary;
     private Long currentId;
 

@@ -1,25 +1,22 @@
-package org.example.tgbot;
+package org.example.tgbot.appvk;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.pojo.ClassModel;
 import org.bson.codecs.pojo.Conventions;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import com.mongodb.client.model.Filters;
 import org.bson.types.ObjectId;
 
 import java.util.List;
 
-public class AppVkData {
+public class GetterPostsVkDatabase {
     private final MongoCollection<AppVkTs> appVkTsData;
     private final String appVkTsId;
 
-    public AppVkData(String mongoUri, String appVkTsId) {
+    public GetterPostsVkDatabase(String mongoUri, String appVkTsId) {
         var codecRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                 CodecRegistries.fromProviders(PojoCodecProvider.builder()
                         .register(

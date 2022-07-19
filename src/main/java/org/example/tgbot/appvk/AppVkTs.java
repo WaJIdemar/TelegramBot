@@ -1,4 +1,4 @@
-package org.example.tgbot;
+package org.example.tgbot.appvk;
 
 public class AppVkTs {
     private String ts;

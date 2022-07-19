@@ -1,15 +1,19 @@
 package org.example.tgbot;
 
 import org.example.tgbot.buttons.CallbackButton;
+import org.example.tgbot.databases.*;
+import org.example.tgbot.databases.elements.ModeratorTermDefinition;
+import org.example.tgbot.databases.elements.TermDefinition;
+import org.example.tgbot.databases.elements.User;
 import org.example.tgbot.keyboards.*;
 
 import java.util.*;
 
 
 public class BotLogic {
-    private final UsersRepository users;
-    private final TermsDictionaryRepo termsDictionary;
-    private final ModeratingTermsDictionaryRepo moderatingTermsDictionaryRepo;
+    private final DatabaseUsers users;
+    private final TermsDictionary termsDictionary;
+    private final ModeratingTermsDictionary moderatingTermsDictionaryRepo;
     private final StandardResponses standardResponses;
     private final StandardUserRequest standardUserRequest;
     private final ChatClient chatClient;
@@ -19,10 +23,10 @@ public class BotLogic {
     private final Long adminGroupId;
     private final Long channelId;
 
-    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId, Long channelId, TermsDictionaryRepo termsDictionary,
-                    ModeratingTermsDictionaryRepo moderatingTermsDictionaryRepo, StandardResponses standardResponses,
+    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId, Long channelId, TermsDictionary termsDictionary,
+                    ModeratingTermsDictionary moderatingTermsDictionaryRepo, StandardResponses standardResponses,
                     StandardUserRequest standardUserRequest, CallbackButton callbackButton, DecisionOnTerm decisionOnTerm,
-                    UsersRepository users) {
+                    DatabaseUsers users) {
         this.chatClient = chatClient;
         this.moderatorGroupId = moderatorGroupId;
         this.adminGroupId = adminGroupId;
@@ -58,8 +62,8 @@ public class BotLogic {
         users.put(user);
     }
 
-    private void acceptUserTerm(User user, String message, UserItent userItent) {
-        if (userItent == UserItent.CANCEL) {
+    private void acceptUserTerm(User user, String message, UserIntent userIntent) {
+        if (userIntent == UserIntent.CANCEL) {
             user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
             chatClient.sendMessage(user.getUserId(), standardResponses.cancel, new RandomOrCertainTermKeyboard());
             chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
@@ -94,8 +98,8 @@ public class BotLogic {
         }
     }
 
-    private void acceptWordInput(User user, String message, UserItent userItent) {
-        if (userItent == UserItent.CANCEL) {
+    private void acceptWordInput(User user, String message, UserIntent userIntent) {
+        if (userIntent == UserIntent.CANCEL) {
             if (!user.banned) {
                 chatClient.sendMessage(user.getUserId(), standardResponses.writeDefinition.formatted(user.getUserTerm()), new YesOrNoKeyboard());
                 user.setDialogState(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT);
@@ -116,8 +120,8 @@ public class BotLogic {
         }
     }
 
-    private void acceptDefinition(User user, String message, UserItent userItent) {
-        if (userItent == UserItent.CANCEL)
+    private void acceptDefinition(User user, String message, UserIntent userIntent) {
+        if (userIntent == UserIntent.CANCEL)
             chatClient.sendMessage(user.getUserId(), standardResponses.cancel, new RandomOrCertainTermKeyboard());
         else {
             chatClient.sendMessage(user.getUserId(), standardResponses.definitionSentForConsideration, new RandomOrCertainTermKeyboard());
@@ -131,11 +135,11 @@ public class BotLogic {
     }
 
 
-    private void acceptConfirmationDefinitionInput(User user, UserItent userItent) {
-        if (userItent == UserItent.YES) {
+    private void acceptConfirmationDefinitionInput(User user, UserIntent userIntent) {
+        if (userIntent == UserIntent.YES) {
             chatClient.sendMessage(user.getUserId(), standardResponses.waitDefinition.formatted(user.getUserTerm()), new CancelKeyboard());
             user.setDialogState(DialogState.WAIT_DEFINITION);
-        } else if (userItent == UserItent.NO) {
+        } else if (userIntent == UserIntent.NO) {
             chatClient.sendMessage(user.getUserId(), standardResponses.cancel, new RandomOrCertainTermKeyboard());
             chatClient.sendMessage(user.getUserId(), standardResponses.outTerm, new RandomOrCertainTermKeyboard());
             user.setDialogState(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM);
@@ -144,8 +148,8 @@ public class BotLogic {
         }
     }
 
-    private void acceptRandomOrCertainTerm(User user, UserItent userItent) {
-        switch (userItent) {
+    private void acceptRandomOrCertainTerm(User user, UserIntent userIntent) {
+        switch (userIntent) {
             case RANDOM_TERM -> {
                 TermDefinition termDefinition = termsDictionary.getRandomTerm();
                 String text = termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
@@ -169,8 +173,8 @@ public class BotLogic {
         }
     }
 
-    private void acceptDefaultState(User user, UserItent userItent) {
-        switch (userItent) {
+    private void acceptDefaultState(User user, UserIntent userIntent) {
+        switch (userIntent) {
             case HELP -> chatClient.sendMessage(user.getUserId(), standardResponses.helpMessage, new DefaultKeyboard());
             case GREETING -> chatClient.sendMessage(user.getUserId(), standardResponses.gettingMessage, new DefaultKeyboard());
             case OUT_TERM -> {
@@ -210,27 +214,27 @@ public class BotLogic {
 
     }
 
-    private UserItent parseUserMessage(String message) {
+    private UserIntent parseUserMessage(String message) {
         if (Objects.equals(message, standardUserRequest.help))
-            return UserItent.HELP;
+            return UserIntent.HELP;
         if (Objects.equals(message, standardUserRequest.getting))
-            return UserItent.GREETING;
+            return UserIntent.GREETING;
         if (Objects.equals(message, standardUserRequest.outTerm))
-            return UserItent.OUT_TERM;
+            return UserIntent.OUT_TERM;
         if (Objects.equals(message, standardUserRequest.outRandomTerm)
                 || Objects.equals(message, standardUserRequest.outRandomTerm2))
-            return UserItent.RANDOM_TERM;
+            return UserIntent.RANDOM_TERM;
         if (Objects.equals(message, standardUserRequest.outCertainTerm)
                 || Objects.equals(message, standardUserRequest.outCertainTerm2))
-            return UserItent.CERTAIN_TERM;
+            return UserIntent.CERTAIN_TERM;
         if (Objects.equals(message, standardUserRequest.cancel))
-            return UserItent.CANCEL;
+            return UserIntent.CANCEL;
         if (Objects.equals(message, standardUserRequest.yes))
-            return UserItent.YES;
+            return UserIntent.YES;
         if (Objects.equals(message, standardUserRequest.no))
-            return UserItent.NO;
+            return UserIntent.NO;
         if (Objects.equals(message, standardUserRequest.back))
-            return UserItent.BACK;
-        return UserItent.UNKNOWN_COMMAND;
+            return UserIntent.BACK;
+        return UserIntent.UNKNOWN_COMMAND;
     }
 }
