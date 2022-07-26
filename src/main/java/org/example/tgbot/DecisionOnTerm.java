@@ -1,7 +1,7 @@
 package org.example.tgbot;
 
 public class DecisionOnTerm {
-    public String accept = "Термин принят";
-    public String reject = "Термин отклонён";
-    public String ban = "Пользователь был забанен";
+    public final String accept = "Термин принят";
+    public final String reject = "Термин отклонён";
+    public final String ban = "Пользователь был забанен";
 }

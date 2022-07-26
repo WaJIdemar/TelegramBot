@@ -1,7 +1,7 @@
 package org.example.tgbot.buttons;
 
 public class CallbackButton {
-    public String accept = "accept";
-    public String reject = "reject";
-    public String ban = "ban";
+    public final String accept = "accept";
+    public final String reject = "reject";
+    public final String ban = "ban";
 }

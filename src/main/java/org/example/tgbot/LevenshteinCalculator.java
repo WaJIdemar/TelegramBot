@@ -1,6 +1,5 @@
 package org.example.tgbot;
 
-
 public class LevenshteinCalculator {
     public double levenshteinDistance(String token1, String token2) {
         var opt = new int[token1.length() + 1][token2.length() + 1];

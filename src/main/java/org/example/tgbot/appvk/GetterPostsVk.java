@@ -31,9 +31,11 @@ public class GetterPostsVk implements Runnable {
     private final Long adminGroupId;
     private final GetterPostsVkDatabase getterPostsVkDatabase;
     private AppVkTs appVkTs;
-    private boolean errorStatus;
+    private String key;
+    private String server;
 
-    public GetterPostsVk(int appVkId, String secretKey, String serviceKey, int vkGroupId, String accessToken, VkApiClient vk, GetterPostsVkDatabase getterPostsVkDatabase,
+    public GetterPostsVk(int appVkId, String secretKey, String serviceKey,
+                         int vkGroupId, String accessToken, VkApiClient vk, GetterPostsVkDatabase getterPostsVkDatabase,
                          ChatClient chatClient, Long groupIdSendPostTo, Long adminGroupId) {
         this.chatClient = chatClient;
         this.idVkGroup = vkGroupId;
@@ -44,13 +46,10 @@ public class GetterPostsVk implements Runnable {
         this.adminGroupId = adminGroupId;
         this.getterPostsVkDatabase = getterPostsVkDatabase;
         g = new Gson();
-        errorStatus = false;
     }
 
     @Override
     public void run() {
-        String server = null;
-        String key = null;
         appVkTs = getterPostsVkDatabase.getAppVkTs();
         try {
             server = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getServer();
@@ -60,9 +59,7 @@ public class GetterPostsVk implements Runnable {
             return;
         }
         while (true) {
-            GetLongPollEventsResponse eventsResponse = getLongPollEventsResponse(server, key);
-            if (errorStatus)
-                return;
+            GetLongPollEventsResponse eventsResponse = getLongPollEventsResponse();
             if (eventsResponse == null)
                 continue;
             try {
@@ -85,7 +82,7 @@ public class GetterPostsVk implements Runnable {
         }
     }
 
-    private GetLongPollEventsResponse getLongPollEventsResponse(String server, String key){
+    private GetLongPollEventsResponse getLongPollEventsResponse() {
         GetLongPollEventsResponse eventsResponse = null;
         try {
             eventsResponse = vk.longPoll().getEvents(server, key, appVkTs.getTs()).execute();
@@ -94,18 +91,15 @@ public class GetterPostsVk implements Runnable {
                 key = vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getKey();
             } catch (Exception ex) {
                 chatClient.sendMessage(adminGroupId, "Ошибка при получении ключа для appVk'a:" + "\n" + ex.getMessage());
-                errorStatus = true;
             }
         } catch (LongPollServerTsException e) {
             try {
                 appVkTs.changeTs(vk.groups().getLongPollServer(groupActor, idVkGroup).execute().getTs());
             } catch (Exception ex) {
                 chatClient.sendMessage(adminGroupId, "Ошибка при получении нового номера события для appVk'a:" + "\n" + ex.getMessage());
-                errorStatus = true;
             }
         } catch (Exception e) {
             chatClient.sendMessage(adminGroupId, "Ошибка при получении поста appVk'a:" + "\n" + e.getMessage());
-            errorStatus = true;
         }
         return eventsResponse;
     }

@@ -1,30 +1,30 @@
 package org.example.tgbot;
 
 public class StandardResponses {
-    public String startMessage = "Привет, я чат-бот! Чтобы узнать что я умею, напишите \"Помощь\"";
-    public String helpMessage = """
+    public final String startMessage = "Привет, я чат-бот! Чтобы узнать что я умею, напишите \"Помощь\"";
+    public final String helpMessage = """
             Я умею:
             -Дать вам определение для рандомного или конкретного ролевого термина. Для этого напишите "Дай определение"
             -Ну и здороваться могу, да. Просто напишите "Привет\"""";
-    public String gettingMessage = "Привет!";
-    public String outTerm = "Рандомное или конкретное определение?";
-    public String waitTerm = "Определение какого термина хотите узнать?";
-    public String userAgree = """
+    public final String gettingMessage = "Привет!";
+    public final String outTerm = "Рандомное или конкретное определение?";
+    public final String waitTerm = "Определение какого термина хотите узнать?";
+    public final String userAgree = """
             Возможно вы имели ввиду что-то из этого: %s ?
             Выберите и напишите слово из списка, если подходящих среди них не оказалось - нажмите "Отменить\"""";
-    public String invalidInputWaitWord = "Напишите одно из предложеных слов, либо нажмите кнопку \"Отменить\"";
-    public String invalidInputYesOrNo = "Напишите \"Да\" или \"Нет\" или воспользуйтесь кнопками";
-    public String termNotFound = "У меня нет похожих слов в словаре( Но я ещё учусь! Хотите добавить в мой словарь определение для термина %s?";
-    public String writeDefinition = "Хотите добавить в мой словарь новое определение %s?";
-    public String cancel = "Ок(";
-    public String waitDefinition = "Опишите мне, что такое %s?";
-    public String invalidInputRandomOrCertain = "Напишите \"Конкретный термин\" или \"Рандомный термин\", или \"Назад\", " +
+    public final String invalidInputWaitWord = "Напишите одно из предложеных слов, либо нажмите кнопку \"Отменить\"";
+    public final String invalidInputYesOrNo = "Напишите \"Да\" или \"Нет\" или воспользуйтесь кнопками";
+    public final String termNotFound = "У меня нет похожих слов в словаре( Но я ещё учусь! Хотите добавить в мой словарь определение для термина %s?";
+    public final String writeDefinition = "Хотите добавить в мой словарь новое определение %s?";
+    public final String cancel = "Ок(";
+    public final String waitDefinition = "Опишите мне, что такое %s?";
+    public final String invalidInputRandomOrCertain = "Напишите \"Конкретный термин\" или \"Рандомный термин\", или \"Назад\", " +
             "или воспользуйтесь кнопками.";
-    public String definitionSentForConsideration = "Спасибо! Ваше определение отправлено на рассмотрение моим разработчиками";
-    public String notFondTermsAndUserBanned = "У меня нет похожих слов в словаре( И вы не можете добавить это слово в словарь, так как " +
+    public final String definitionSentForConsideration = "Спасибо! Ваше определение отправлено на рассмотрение моим разработчиками";
+    public final String notFondTermsAndUserBanned = "У меня нет похожих слов в словаре( И вы не можете добавить это слово в словарь, так как " +
             "были забанены(";
-    public String unknownCommand = "Извините, я вас не понимаю(";
-    public String messageForModerator = """
+    public final String unknownCommand = "Извините, я вас не понимаю(";
+    public final String messageForModerator = """
             ID: %s
             Одобрите пожалуйста, если достойно
             ня (^_^)6
@@ -32,15 +32,15 @@ public class StandardResponses {
             %s - %s
             #%d
             """;
-    public String acceptTerm = """
+    public final String acceptTerm = """
             Поздравляю, Ваш термин:
             %s.
             Был одобрен)""";
-    public String banUser = """
+    public final String banUser = """
             Вы были забанены за некоректное определение:
             %s
             (((""";
-    public String rejectTerm = """
+    public final String rejectTerm = """
             Ваш термин:
             %s.
             Был отклонён(""";

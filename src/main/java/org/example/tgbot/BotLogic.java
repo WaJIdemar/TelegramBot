@@ -9,7 +9,6 @@ import org.example.tgbot.keyboards.*;
 
 import java.util.*;
 
-
 public class BotLogic {
     private final DatabaseUsers users;
     private final TermsDictionary termsDictionary;
@@ -23,7 +22,7 @@ public class BotLogic {
     private final Long adminGroupId;
     private final Long channelId;
 
-    public BotLogic(ChatClient chatClient, Long moderatorGroupId, Long adminGroupId, Long channelId, TermsDictionary termsDictionary,
+    public BotLogic(ChatClient chatClient, Long moderatorGroupId,  Long adminGroupId, Long channelId, TermsDictionary termsDictionary,
                     ModeratingTermsDictionary moderatingTermsDictionaryRepo, StandardResponses standardResponses,
                     StandardUserRequest standardUserRequest, CallbackButton callbackButton, DecisionOnTerm decisionOnTerm,
                     DatabaseUsers users) {

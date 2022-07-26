@@ -28,8 +28,8 @@ import java.util.Objects;
 public class TelegramBot extends TelegramLongPollingBot {
     private final String name;
     private final String token;
-    private BotLogic botLogic;
     private final Long adminGroupId;
+    private BotLogic botLogic;
 
     public TelegramBot(String name, String token, Long adminGroupId) {
         this.name = name;
