@@ -4,7 +4,8 @@ import org.example.tgbot.buttons.InlineButton;
 import org.example.tgbot.keyboards.CallbackKeyboard;
 import org.example.tgbot.keyboards.Keyboard;
 import org.example.tgbot.keyboards.UrlKeyboard;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.bots.TelegramWebhookBot;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -25,16 +26,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class TelegramBot extends TelegramLongPollingBot {
+public class TelegramBot extends TelegramWebhookBot {
     private final String name;
     private final String token;
+    private final String botPath;
     private final Long adminGroupId;
     private BotLogic botLogic;
 
-    public TelegramBot(String name, String token, Long adminGroupId) {
+    public TelegramBot(String name, String token, String botPath, Long adminGroupId) {
         this.name = name;
         this.token = token;
         this.adminGroupId = adminGroupId;
+        this.botPath = botPath;
     }
 
     public void setBotLogic(BotLogic botLogic) {
@@ -42,17 +45,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     @Override
-    public String getBotUsername() {
-        return name;
-    }
-
-    @Override
-    public String getBotToken() {
-        return token;
-    }
-
-    @Override
-    public void onUpdateReceived(Update update) {
+    public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             try {
                 botLogic.respondUser(update.getMessage().getChatId(), update.getMessage().getText());
@@ -82,6 +75,22 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
+        return null;
+    }
+
+    @Override
+    public String getBotPath() {
+        return botPath;
+    }
+
+    @Override
+    public String getBotUsername() {
+        return name;
+    }
+
+    @Override
+    public String getBotToken() {
+        return token;
     }
 
     public synchronized void sendMessage(Long chatId, String text, List<String> photosUrl, UrlKeyboard keyboard) {

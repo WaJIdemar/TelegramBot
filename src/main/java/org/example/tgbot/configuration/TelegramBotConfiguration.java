@@ -2,6 +2,7 @@ package org.example.tgbot.configuration;
 
 import org.example.tgbot.*;
 import org.example.tgbot.buttons.CallbackButton;
+import org.example.tgbot.controller.TelegramWebhookBotController;
 import org.example.tgbot.databases.*;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
@@ -17,7 +18,8 @@ public class TelegramBotConfiguration {
         String botName = System.getenv("TELEGRAM_BOT_NAME");
         String botToken = System.getenv("TELEGRAM_BOT_TOKEN");
         Long adminGroupId = Long.parseLong(System.getenv("TELEGRAM_ADMIN_GROUP_ID"));
-        return new TelegramBot(botName, botToken, adminGroupId);
+        String botPath = System.getenv("TELEGRAM_BOT_PATH");
+        return new TelegramBot(botName, botToken, botPath, adminGroupId);
     }
 
     @Bean
@@ -70,7 +72,8 @@ public class TelegramBotConfiguration {
         return new CallbackButton();
     }
 
-    @Bean DecisionOnTerm decisionOnTerm(){
+    @Bean
+    public DecisionOnTerm decisionOnTerm(){
         return new DecisionOnTerm();
     }
 }
