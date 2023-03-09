@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  telegram_bot:
+    image: java-docker:latest
+    env_file:
+      - TelegramBot-params.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo:latest
+    env_file:
+      - DataBase-params.env
+    ports:
+      - "27017:27017"
+    volumes:
+      - /home/data/telegram_bot_database:/data/db
