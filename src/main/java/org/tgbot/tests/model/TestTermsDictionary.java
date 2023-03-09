@@ -1,4 +1,4 @@
-package org.tgbot.tests;
+package org.tgbot.tests.model;
 
 import org.tgbot.LevenshteinCalculator;
 import org.tgbot.databases.TermsDictionary;
@@ -40,6 +40,14 @@ public class TestTermsDictionary implements TermsDictionary {
 
     @Override
     public TermDefinition getRandomTerm() {
-        return termsDictionary.getOrDefault("ppp", new TermDefinition("test", "test"));
+        return new TermDefinition("test", "test");
+    }
+
+    public boolean isEmpty(){
+        return termsDictionary.isEmpty();
+    }
+
+    public void clear() {
+        termsDictionary.clear();
     }
 }

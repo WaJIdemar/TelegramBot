@@ -1,4 +1,4 @@
-package org.tgbot.tests;
+package org.tgbot.tests.model;
 
 import org.tgbot.databases.DatabaseUsers;
 import org.tgbot.databases.elements.User;
@@ -17,9 +17,18 @@ public class TestDatabaseUsers implements DatabaseUsers {
 
     @Override
     public void put(User user) {
-        if (!users.containsKey(user.getUserId()))
+        if (!users.containsKey(user.getUserId())) {
             users.put(user.getUserId(), user);
-        else
+        } else {
             users.replace(user.getUserId(), user);
+        }
+    }
+
+    public void clear() {
+        users.clear();
+    }
+
+    public boolean userContains(Long chatId) {
+        return users.containsKey(chatId);
     }
 }

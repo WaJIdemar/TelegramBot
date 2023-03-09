@@ -1,4 +1,4 @@
-package org.tgbot.tests;
+package org.tgbot.tests.model;
 
 import org.tgbot.ChatClient;
 import org.tgbot.keyboards.CallbackKeyboard;
@@ -9,56 +9,81 @@ import java.util.List;
 
 public class TestChatClient implements ChatClient {
 
-    public String prevMes = "";
     public String currentMes;
     public Long currentChatId;
 
+    public String previousMes;
+
+    public Keyboard currentKeyboard;
+
+    public String currentMesCallback;
+
+    public CallbackKeyboard currentCallbackKeyboard;
+
+    public Long currentChatIdCallback;
+
     @Override
     public void sendMessage(Long chatId, String text, Keyboard keyboard) {
-        prevMes = currentMes;
+
+        previousMes = currentMes;
         currentMes = text;
         currentChatId = chatId;
+        currentKeyboard = keyboard;
     }
 
     @Override
     public void sendMessage(Long chatId, String text, CallbackKeyboard keyboard) {
-        prevMes = currentMes;
-        currentMes = text;
-        currentChatId = chatId;
+
+        currentMesCallback = text;
+        currentChatIdCallback = chatId;
+        currentCallbackKeyboard = keyboard;
     }
 
     @Override
     public void sendMessage(Long chatId, String text) {
-        prevMes = currentMes;
+
+        previousMes = currentMes;
         currentMes = text;
         currentChatId = chatId;
     }
 
     @Override
     public void editMessage(Long chatId, Integer messageId, String text) {
-        prevMes = currentMes;
+
+        previousMes = currentMes;
         currentMes = text;
-        currentChatId = chatId;
+        currentChatIdCallback = chatId;
     }
 
     @Override
     public void sendMessage(Long chatId, String text, List<String> photosUrl, UrlKeyboard keyboard) {
-        prevMes = currentMes;
+
+        previousMes = currentMes;
         currentMes = text;
         currentChatId = chatId;
     }
 
     @Override
     public void sendMessage(Long chatId, String text, String photoUrl, UrlKeyboard keyboard) {
-        prevMes = currentMes;
+
+        previousMes = currentMes;
         currentMes = text;
         currentChatId = chatId;
     }
 
     @Override
     public void sendMessage(Long chatId, String text, UrlKeyboard keyboard) {
-        prevMes = currentMes;
+
+        previousMes = currentMes;
         currentMes = text;
         currentChatId = chatId;
+    }
+
+    public void clear() {
+
+        previousMes = null;
+        currentMes = null;
+        currentChatId = null;
+        currentKeyboard = null;
     }
 }

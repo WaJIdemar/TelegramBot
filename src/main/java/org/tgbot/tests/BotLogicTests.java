@@ -1,11 +1,18 @@
 package org.tgbot.tests;
 
 import org.tgbot.DecisionOnTerm;
+import org.tgbot.DialogState;
 import org.tgbot.StandardResponses;
 import org.tgbot.StandardUserRequest;
 import org.tgbot.buttons.CallbackButton;
+import org.tgbot.databases.elements.ModeratorTermDefinition;
 import org.tgbot.databases.elements.TermDefinition;
+import org.tgbot.keyboards.*;
 import org.tgbot.logic.BotLogic;
+import org.tgbot.tests.model.TestChatClient;
+import org.tgbot.tests.model.TestDatabaseUsers;
+import org.tgbot.tests.model.TestModeratingTermsDictionary;
+import org.tgbot.tests.model.TestTermsDictionary;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,148 +22,376 @@ public class BotLogicTests {
     private final TestDatabaseUsers testDatabaseUsers;
     private final TestTermsDictionary testTermsDictionary;
     private final TestModeratingTermsDictionary testModeratingTermsDictionary;
+
+    private final StandardResponses standardResponses;
+
+    private final Long userId;
+
+    private final Long moderatorGroupId;
+
+    private final DecisionOnTerm decisionOnTerm;
+
     private final BotLogic botLogic;
 
-    private BotLogicTests(){
+    private BotLogicTests() {
         testChatClient = new TestChatClient();
         testDatabaseUsers = new TestDatabaseUsers();
         testTermsDictionary = new TestTermsDictionary();
         testModeratingTermsDictionary = new TestModeratingTermsDictionary();
-        botLogic = new BotLogic(testChatClient, 12L, 11L, 13L, testTermsDictionary,
-                testModeratingTermsDictionary, new StandardResponses(),
-                new StandardUserRequest(), new CallbackButton(), new DecisionOnTerm(),testDatabaseUsers);
+        standardResponses = new StandardResponses();
+        userId = 123L;
+        moderatorGroupId = 12L;
+        decisionOnTerm = new DecisionOnTerm();
+        botLogic = new BotLogic(testChatClient, moderatorGroupId, 11L, 13L, testTermsDictionary,
+                testModeratingTermsDictionary, standardResponses,
+                new StandardUserRequest(), new CallbackButton(), new DecisionOnTerm(), testDatabaseUsers);
+    }
+
+    private void clean() {
+
+        testTermsDictionary.clear();
+        testDatabaseUsers.clear();
+        testModeratingTermsDictionary.clear();
+        testChatClient.clear();
     }
 
     @org.junit.jupiter.api.Test
     void testBotLogicStart() {
-        botLogic.respondUser(1233L, "/start");
-        assertEquals("Привет, я чат-бот! Чтобы узнать что я умею, напишите \"Помощь\"", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
-        }
 
-    @org.junit.jupiter.api.Test
-    void testBotLogicHello() {
-        botLogic.respondUser(1233L, "/start");
-        botLogic.respondUser(1233L, "привет");
-        assertEquals("Привет!", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+
+        assertEquals(standardResponses.startMessage, testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertTrue(testDatabaseUsers.userContains(userId));
+        assertEquals(DialogState.DEFAULT, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+        assertInstanceOf(DefaultKeyboard.class, testChatClient.currentKeyboard);
     }
 
     @org.junit.jupiter.api.Test
     void testBotLogicHelp() {
-        botLogic.respondUser(1233L, "/start");
-        botLogic.respondUser(1233L, "помощь");
-        assertEquals("""
-            Я умею:
-            -Дать вам определение для рандомного или конкретного ролевого термина. Для этого напишите "Дай определение"
-            -Ну и здороваться могу, да. Просто напишите "Привет\"""", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "помощь");
+
+        assertEquals(standardResponses.helpMessage, testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertTrue(testDatabaseUsers.userContains(userId));
+        assertEquals(DialogState.DEFAULT, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+        assertInstanceOf(DefaultKeyboard.class, testChatClient.currentKeyboard);
     }
 
     @org.junit.jupiter.api.Test
-    void testBotLogicRandomTerm() {
-        botLogic.respondUser(1233L, "/start");
-        botLogic.respondUser(1233L, "дай определение");
-        assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
-        botLogic.respondUser(1233L, "рандомное");
-        //assertTrue(new TermsDictionary().containsTermOnDictionary(testChatClient.currentMes.split(" - ")[0].toLowerCase(Locale.ROOT)));
-        assertEquals(1233L, testChatClient.currentChatId);
-        botLogic.respondUser(1233L, "назад");
-        assertEquals("Ок(", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
+    void testBotLogicGetTerm() {
 
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(standardResponses.outTerm, testChatClient.currentMes);
+        assertEquals(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+        assertInstanceOf(RandomOrCertainTermKeyboard.class, testChatClient.currentKeyboard);
     }
 
     @org.junit.jupiter.api.Test
-    void testBotLogicCertainTermCancel() {
-        botLogic.respondUser(1233L, "/start");
-        botLogic.respondUser(1233L, "дай определение");
-        assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
-        botLogic.respondUser(1233L, "конкретное");
-        assertEquals("Определение какого термина хотите узнать?", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
-        botLogic.respondUser(1233L, "отменить");
-        assertEquals("Ок(", testChatClient.prevMes);
-        assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
+    void testBotLogicGetRandomTerm() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "рандомное");
+
+        assertEquals(userId, testChatClient.currentChatId);
+        TermDefinition termDefinition = testTermsDictionary.getRandomTerm();
+        assertEquals(termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
+                + " - " + termDefinition.definition, testChatClient.currentMes);
+        assertEquals(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+        assertInstanceOf(RandomOrCertainTermKeyboard.class, testChatClient.currentKeyboard);
     }
 
     @org.junit.jupiter.api.Test
     void testBotLogicCertainTerm() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+
+        assertEquals(standardResponses.waitTerm, testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertInstanceOf(CancelKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(DialogState.WAIT_TERM, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+    }
+
+    @org.junit.jupiter.api.Test
+    void testBotLogicCertainTermCancel() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "отменить");
+
+        assertEquals(standardResponses.outTerm, testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertInstanceOf(RandomOrCertainTermKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+    }
+
+    @org.junit.jupiter.api.Test
+    void testBotLogicGetCertainTerm() {
+
+        clean();
+
+        TermDefinition termDefinition = new TermDefinition("лор", "бла-бла-бла");
+        testTermsDictionary.addNewTerm(termDefinition);
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "лор");
+
+        assertEquals(termDefinition.term.substring(0, 1).toUpperCase() + termDefinition.term.substring(1)
+                + " - " + termDefinition.definition, testChatClient.previousMes);
+        assertEquals(standardResponses.outTerm, testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertInstanceOf(RandomOrCertainTermKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+    }
+
+    @org.junit.jupiter.api.Test
+    void testBotLogicSimilarTerm() {
+
+        clean();
+
         testTermsDictionary.addNewTerm(new TermDefinition("лор", "бла-бла-бла"));
-        botLogic.respondUser(1233L, "/start");
-        botLogic.respondUser(1233L, "дай определение");
-        assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
-        botLogic.respondUser(1233L, "конкретное");
-        assertEquals("Определение какого термина хотите узнать?", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
-        botLogic.respondUser(1233L, "лор");
-        assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
-        assertEquals(1233L, testChatClient.currentChatId);
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "рол");
+
+        assertEquals(standardResponses.userAgree.formatted("лор"), testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertInstanceOf(CancelKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(DialogState.WAIT_WORD_INPUT, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
     }
 
     @org.junit.jupiter.api.Test
-    void testBotLogicSimilarTerm(){
-        testTermsDictionary.addNewTerm(new TermDefinition("лор", "бла-бла-бла"));
-        botLogic.respondUser(123L, "/start");
-        botLogic.respondUser(123L, "дай определение");
-        botLogic.respondUser(123L, "конкретное");
-        botLogic.respondUser(123L, "рол");
-        assertEquals("Возможно вы имели ввиду что-то из этого: лор ?\n" +
-                "Выберите и напишите слово из списка, если подходящих среди них не оказалось - нажмите \"Отменить\"",
-                testChatClient.currentMes);
+    void testBotLogicUnknownCommand() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "fsjkbvbx,ukdsf");
+
+        assertEquals(standardResponses.unknownCommand, testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertInstanceOf(DefaultKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(DialogState.DEFAULT, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
     }
 
     @org.junit.jupiter.api.Test
-    void testBotLogicUnknownCommand(){
-        botLogic.respondUser(123L, "/start");
-        botLogic.respondUser(123L, "fsjkbvbx,ukdsf");
-        assertEquals("Извините, я вас не понимаю(", testChatClient.currentMes);
+    void testBotLogicUnknownTerm() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+
+        assertEquals(standardResponses.termNotFound.formatted("qwerty"), testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertInstanceOf(YesOrNoKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(DialogState.WAIT_CONFIRMATION_DEFINITION_INPUT, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
     }
 
     @org.junit.jupiter.api.Test
-    void testBotLogicUnknownTerm(){
-        botLogic.respondUser(123L, "/start");
-        botLogic.respondUser(123L, "дай определение");
-        botLogic.respondUser(123L, "конкретное");
-        botLogic.respondUser(123L, "qwerty");
-        assertEquals("У меня нет похожих слов в словаре( Но я ещё учусь! Хотите добавить в мой словарь определение для термина qwerty?",
-                testChatClient.currentMes);
+    void testBotLogicCancelToAddNewTerm() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+        botLogic.respondUser(userId, "нет");
+
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(standardResponses.outTerm, testChatClient.currentMes);
+        assertInstanceOf(RandomOrCertainTermKeyboard.class, testChatClient.currentKeyboard);
+        assertTrue(testTermsDictionary.isEmpty());
+        assertTrue(testModeratingTermsDictionary.isEmpty());
+        assertEquals(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
     }
 
     @org.junit.jupiter.api.Test
-    void testBotLogicCancelToAddNewTerm()
-    {
-        botLogic.respondUser(123L, "/start");
-        botLogic.respondUser(123L, "дай определение");
-        botLogic.respondUser(123L, "конкретное");
-        botLogic.respondUser(123L, "qwerty");
-        botLogic.respondUser(123L, "нет");
-        assertEquals("Ок(",testChatClient.prevMes);
-        assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
+    void testBotLogicAddToNewTerm() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+        botLogic.respondUser(userId, "да");
+
+        assertEquals(standardResponses.waitDefinition.formatted("qwerty"), testChatClient.currentMes);
+        assertInstanceOf(CancelKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(DialogState.WAIT_DEFINITION, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+        assertTrue(testTermsDictionary.isEmpty());
+        assertTrue(testModeratingTermsDictionary.isEmpty());
     }
 
     @org.junit.jupiter.api.Test
-    void testBotLogicAddToNewTerm(){
-        botLogic.respondUser(123L, "/start");
-        botLogic.respondUser(123L, "дай определение");
-        botLogic.respondUser(123L, "конкретное");
-        botLogic.respondUser(123L, "qwerty");
-        botLogic.respondUser(123L, "да");
-        assertEquals("Опишите мне, что такое qwerty?", testChatClient.currentMes);
+    void testBotLogicAddToNewTermDefinition() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+        botLogic.respondUser(userId, "да");
+        botLogic.respondUser(userId, "qwerty1");
+
+        assertEquals(standardResponses.definitionSentForConsideration, testChatClient.previousMes);
+        assertInstanceOf(RandomOrCertainTermKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+        assertTrue(testTermsDictionary.isEmpty());
+        assertFalse(testModeratingTermsDictionary.isEmpty());
+
+        ModeratorTermDefinition moderatorTermDefinition = testModeratingTermsDictionary.getModeratorTermDefinition(0L);
+        TermDefinition termDefinition = moderatorTermDefinition.getTermDefinition();
+
+        assertEquals(userId, moderatorTermDefinition.getUserId());
+        assertEquals(0L, moderatorTermDefinition.getModeratorTermId());
+        assertEquals("qwerty", termDefinition.term);
+        assertEquals("qwerty1", termDefinition.definition);
+        assertInstanceOf(AcceptingKeyboard.class, testChatClient.currentCallbackKeyboard);
+        assertEquals(standardResponses.messageForModerator.formatted(userId, "qwerty", "qwerty1", 0),
+                testChatClient.currentMesCallback);
+
     }
 
     @org.junit.jupiter.api.Test
-    void testBotLogicCancelToAddDefinition(){
-        botLogic.respondUser(123L, "/start");
-        botLogic.respondUser(123L, "дай определение");
-        botLogic.respondUser(123L, "конкретное");
-        botLogic.respondUser(123L, "qwerty");
-        botLogic.respondUser(123L, "да");
-        botLogic.respondUser(123L, "отменить");
-        assertEquals("Ок(", testChatClient.prevMes);
-        assertEquals("Рандомное или конкретное определение?", testChatClient.currentMes);
+    void testBotLogicCancelToAddDefinition() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+        botLogic.respondUser(userId, "да");
+        botLogic.respondUser(userId, "отменить");
+
+        assertEquals(standardResponses.outTerm, testChatClient.currentMes);
+        assertInstanceOf(RandomOrCertainTermKeyboard.class, testChatClient.currentKeyboard);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(DialogState.WAIT_RANDOM_OR_CERTAIN_TERM, testDatabaseUsers.getUserOrCreate(userId).getDialogState());
+    }
+
+    @org.junit.jupiter.api.Test
+    void testBotLogicAcceptedTerm() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+        botLogic.respondUser(userId, "да");
+        botLogic.respondUser(userId, "qwerty1");
+        botLogic.processingCallBack(moderatorGroupId, 123,
+                standardResponses.messageForModerator.formatted(userId, "qwerty", "qwerty1", 0), "accept_0");
+
+        assertEquals(moderatorGroupId, testChatClient.currentChatIdCallback);
+        assertEquals(standardResponses.messageForModerator.formatted(userId, "qwerty", "qwerty1", 0) +
+                "\n______\n" + decisionOnTerm.accept, testChatClient.currentMes);
+
+        TermDefinition termDefinition = testTermsDictionary.getCertainDefinition("qwerty");
+
+        assertEquals("qwerty", termDefinition.term);
+        assertEquals("qwerty1", termDefinition.definition);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(standardResponses.acceptTerm.formatted("Qwerty - qwerty1"), testChatClient.previousMes);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testBotLogicRejectTerm() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+        botLogic.respondUser(userId, "да");
+        botLogic.respondUser(userId, "qwerty1");
+        botLogic.processingCallBack(moderatorGroupId, 123,
+                standardResponses.messageForModerator.formatted(userId, "qwerty", "qwerty1", 0), "reject_0");
+
+        assertEquals(moderatorGroupId, testChatClient.currentChatIdCallback);
+        assertEquals(standardResponses.messageForModerator.formatted(userId, "qwerty", "qwerty1", 0) +
+                "\n______\n" + decisionOnTerm.reject, testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(standardResponses.rejectTerm.formatted("Qwerty - qwerty1"), testChatClient.previousMes);
+        assertTrue(testTermsDictionary.isEmpty());
+    }
+
+    @org.junit.jupiter.api.Test
+    void testBotLogicBanUser() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+        botLogic.respondUser(userId, "да");
+        botLogic.respondUser(userId, "qwerty1");
+        botLogic.processingCallBack(moderatorGroupId, 123,
+                standardResponses.messageForModerator.formatted(userId, "qwerty", "qwerty1", 0), "ban_0");
+
+        assertEquals(moderatorGroupId, testChatClient.currentChatIdCallback);
+        assertEquals(standardResponses.messageForModerator.formatted(userId, "qwerty", "qwerty1", 0) +
+                "\n______\n" + decisionOnTerm.ban, testChatClient.currentMes);
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(standardResponses.banUser.formatted("Qwerty - qwerty1"), testChatClient.previousMes);
+        assertTrue(testTermsDictionary.isEmpty());
+        assertTrue(testDatabaseUsers.getUserOrCreate(userId).banned);
+    }
+
+    @org.junit.jupiter.api.Test
+    void testBotLogicAddTermBanUser() {
+
+        clean();
+
+        botLogic.respondUser(userId, "/start");
+        botLogic.respondUser(userId, "дай определение");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+        botLogic.respondUser(userId, "да");
+        botLogic.respondUser(userId, "qwerty1");
+        botLogic.processingCallBack(moderatorGroupId, 123,
+                standardResponses.messageForModerator.formatted(userId, "qwerty", "qwerty1", 0), "ban_0");
+        botLogic.respondUser(userId, "конкретное");
+        botLogic.respondUser(userId, "qwerty");
+
+        assertEquals(userId, testChatClient.currentChatId);
+        assertEquals(standardResponses.notFondTermsAndUserBanned, testChatClient.previousMes);
+        assertTrue(testDatabaseUsers.getUserOrCreate(userId).banned);
     }
 }
